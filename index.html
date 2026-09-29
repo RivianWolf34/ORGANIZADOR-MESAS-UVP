@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Organizador Dinámico - Sistema de 4 Colores</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- Ventana de Inicio de Sesión -->
+    <div id="loginOverlay">
+        <div class="login-card">
+            <h2>Acceso al Sistema</h2>
+            <p style="text-align: center; color: var(--text-muted); font-size: 0.9rem;">Introduce tus credenciales</p>
+            <div class="input-group">
+                <label for="loginUser">Usuario (Profesor / Admin)</label>
+                <input type="text" id="loginUser" autocomplete="off" placeholder="Usuario">
+            </div>
+            <div class="input-group">
+                <label for="loginPass">Contraseña</label>
+                <input type="password" id="loginPass" placeholder="••••••••">
+            </div>
+            <div id="loginError" class="login-error"></div>
+            <button id="btnLogin" style="width: 100%;">Entrar</button>
+        </div>
+    </div>
+
+    <div class="container" id="mainContainer">
+        <h1>Organizador de Grupos</h1>
+        <p class="subtitle">Sistema matemático de 4 roles sin colisiones</p>
+
+        <!-- Selector de Grupos (Se oculta si es Admin) -->
+        <div class="controls-card" id="controlsCardGrupo" style="background-color: #f8fafc; border: 1px solid #cbd5e1;">
+            <h3 style="margin: 0 0 0.5rem 0;">Módulo de Profesor: <span id="nombreProfeUI" style="color: var(--primary);"></span></h3>
+            <div class="input-group">
+                <label for="grupoSelect">Selecciona tu grupo a organizar:</label>
+                <select id="grupoSelect">
+                    <option value="">Cargando grupos...</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Panel de control de alumnos -->
+        <div class="controls-card" id="panelAlumnos" style="display: none;">
+            <h3 style="margin-bottom: 0.2rem;">1. Lista de Alumnos Presentes</h3>
+            
+            <!-- Panel normal para profesores -->
+            <div id="controlesProfesor" class="selector-row">
+                <select id="alumnoSelect">
+                    <option value="">Selecciona un alumno...</option>
+                </select>
+                <button id="btnAgregarAlumno">Añadir</button>
+                <button id="btnAgregarTodos" class="btn-secondary">Añadir Todos (Aleatorio)</button>
+            </div>
+
+            <!-- Panel especial simplificado para Admin -->
+            <div id="controlesAdmin" class="selector-row" style="display: none; align-items: flex-end;">
+                <div class="input-group" style="flex: 1; max-width: 250px;">
+                    <label for="adminInputNum">Cantidad total de alumnos:</label>
+                    <input type="number" id="adminInputNum" min="4" placeholder="Ej. 12" style="width: 100%;">
+                </div>
+                <button id="btnGenerarAdmin">Generar Alumnos</button>
+            </div>
+            
+            <div class="chips-container" id="alumnosSeleccionadosContenedor"></div>
+
+            <div class="action-row">
+                <div>Total seleccionados: <strong id="contadorAlumnos">0</strong> (Mínimo 4)</div>
+                <button id="btnCalcular" disabled>Confirmar y Calcular Mesas</button>
+            </div>
+        </div>
+
+        <!-- Secciones de resultados -->
+        <div id="sectionPreTask" class="section-container">
+            <h2>2. Pre-Task (Interacción 1)</h2>
+            <div class="info-box">
+                <strong>¿Qué hacemos aquí?</strong> Se asigna el rol a cada estudiante y se reúnen por equipos con su mismo rol para una primera charla de preparación. Esto corresponde a la <strong>Interacción 1</strong>.
+            </div>
+            <div class="grid-stats">
+                <div class="stat-card color-R"><div class="stat-label">🔴 Rol Rojo</div><div class="stat-number" id="countR">0</div><div class="names-list" id="namesListR"></div></div>
+                <div class="stat-card color-A"><div class="stat-label">🟡 Rol Amarillo</div><div class="stat-number" id="countA">0</div><div class="names-list" id="namesListA"></div></div>
+                <div class="stat-card color-Z"><div class="stat-label">🔵 Rol Azul</div><div class="stat-number" id="countZ">0</div><div class="names-list" id="namesListZ"></div></div>
+                <div class="stat-card color-V"><div class="stat-label">🟢 Rol Verde</div><div class="stat-number" id="countV">0</div><div class="names-list" id="namesListV"></div></div>
+            </div>
+        </div>
+
+        <div id="sectionSimulation" class="section-container">
+            <h2>3. Simulation</h2>
+            <div class="info-box">
+                <strong>¿Qué hacemos aquí?</strong> Los alumnos se distribuyen en mesas mixtas. Aquí se desarrollan la <strong>Interacción 2</strong> y la <strong>Interacción 3</strong>.
+            </div>
+            <div class="simulation-block" id="blockInteraccion2">
+                <div class="sub-section-title">🔄 Interacción 2 (Primera Ronda)</div>
+                <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1rem;">Hablan en parejas base: (Rol Rojo con Rol Azul) y (Rol Amarillo con Rol Verde). Si hay alumnos extras, se integran a una pareja para formar un trío equilibrado.</p>
+                <div id="mesasInteraccion2" class="grid-tables"></div>
+                <button id="btnInteraccion3">Avanzar a Interacción 3 🔄</button>
+            </div>
+            <div class="simulation-block" id="blockInteraccion3" style="display: none; border-top: 2px dashed var(--border-color); padding-top: 1.5rem;">
+                <div class="sub-section-title">🔄 Interacción 3 (Segunda Ronda / Rotación)</div>
+                <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1rem;">¡Cambio de mesa y de parejas! Ahora se emparejan (Rol Rojo con Rol Amarillo) y (Rol Azul con Rol Verde). Los alumnos extra se mueven a una nueva mesa para conversar con personas distintas sin repetir con su propio rol.</p>
+                <div id="mesasInteraccion3" class="grid-tables"></div>
+            </div>
+        </div>
+
+        <div id="sectionPostTask" class="section-container">
+            <h2>4. Post-Task (Interacción 4)</h2>
+            <div class="info-box">
+                <strong>¿Qué hacemos aquí?</strong> Todos regresan con sus equipos originales de color y rol para poner en común y cerrar la actividad. <strong>Interacción 4</strong>.
+            </div>
+            <div class="grid-stats">
+                <div class="stat-card color-R"><div class="stat-label">🔴 Rol Rojo</div><div class="stat-number" id="postCountR">0</div><div class="names-list" id="postNamesListR"></div></div>
+                <div class="stat-card color-A"><div class="stat-label">🟡 Rol Amarillo</div><div class="stat-number" id="postCountA">0</div><div class="names-list" id="postNamesListA"></div></div>
+                <div class="stat-card color-Z"><div class="stat-label">🔵 Rol Azul</div><div class="stat-number" id="postCountZ">0</div><div class="names-list" id="postNamesListZ"></div></div>
+                <div class="stat-card color-V"><div class="stat-label">🟢 Rol Verde</div><div class="stat-number" id="postCountV">0</div><div class="names-list" id="postNamesListV"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="datos.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
