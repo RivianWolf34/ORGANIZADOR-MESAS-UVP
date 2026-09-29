@@ -19,7 +19,7 @@ themeToggle.addEventListener('click', () => {
     }
 });
 
-// Constantes visuales actualizadas
+// Constantes visuales
 const COLOR_NAMES = { 'R': 'Rojo', 'A': 'Amar', 'Z': 'Azul', 'V': 'Verde' };
 const COLOR_ICONS = { 'R': '🔴', 'A': '🟡', 'Z': '🔵', 'V': '🟢' };
 const ROLE_NAMES = { 'R': 'Rol Rojo', 'A': 'Rol Amarillo', 'Z': 'Rol Azul', 'V': 'Rol Verde' };
@@ -31,11 +31,10 @@ let alumnosSeleccionados = [];
 let globalTables = [];
 let numMesas = 0;
 
-// BASE DE DATOS INTERNA OCULTA (Incluye al Admin protegido aquí)
-// Nota: Puedes cambiar este hash por el de la contraseña que túprefieras para el Admin.
+// BASE DE DATOS INTERNA OCULTA (Admin protegido con su hash)
 const USUARIOS_INTERNOS = {
     "admin": {
-        hash: "2ee62f16ca41fe7879853975d5fcb4cb858f6edb5fd0355cfb7948d997e6b6a9" // Hash de ejemplo (vacío o cámbialo por tu contraseña cifrada)
+        hash: "2ee62f16ca41fe7879853975d5fcb4cb858f6edb5fd0355cfb7948d997e6b6a9" 
     }
 };
 
@@ -48,18 +47,17 @@ async function generarHash(texto) {
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-// 1. SISTEMA DE LOGIN (Busca tanto en datos.js como en la base interna oculta)
+// 1. SISTEMA DE LOGIN Y SESIÓN
 document.getElementById('btnLogin').addEventListener('click', async () => {
     const userRaw = document.getElementById('loginUser').value.trim(); 
     const pass = document.getElementById('loginPass').value.trim();
     const errorEl = document.getElementById('loginError');
 
-    // Combinamos las bases de datos para que reconozca al Admin interno y a los profes de datos.js
     let baseTotal = {};
     if (typeof BASE_DE_DATOS !== 'undefined') {
         baseTotal = { ...BASE_DE_DATOS };
     }
-    // Añadimos el admin interno con su clave en minúscula
+    // Aseguramos que el admin interno siempre esté disponible aquí
     baseTotal["admin"] = USUARIOS_INTERNOS["admin"];
 
     const userKey = Object.keys(baseTotal).find(k => k.toLowerCase() === userRaw.toLowerCase());
@@ -72,15 +70,30 @@ document.getElementById('btnLogin').addEventListener('click', async () => {
     const hashGenerado = await generarHash(pass);
 
     if (hashGenerado === baseTotal[userKey].hash) {
-        usuarioActual = userKey;
-        document.getElementById('loginOverlay').style.display = 'none';
-        document.getElementById('mainContainer').style.display = 'block';
-        document.getElementById('nombreProfeUI').textContent = userKey.toUpperCase();
-        
-        cargarConfiguracionUsuario();
+        iniciarSesionExitosa(userKey);
     } else {
         errorEl.textContent = 'Contraseña incorrecta';
         document.getElementById('loginPass').value = '';
+    }
+});
+
+function iniciarSesionExitosa(userKey) {
+    usuarioActual = userKey;
+    sessionStorage.setItem('usuarioActual', userKey);
+    
+    document.getElementById('loginOverlay').style.display = 'none';
+    document.getElementById('mainContainer').style.display = 'block';
+    document.getElementById('nombreProfeUI').textContent = userKey.toUpperCase();
+    document.getElementById('btnLogout').style.display = 'flex';
+    
+    cargarConfiguracionUsuario();
+}
+
+// Botón de Cerrar Sesión
+document.getElementById('btnLogout').addEventListener('click', () => {
+    if (confirm("¿Estás seguro de que deseas cerrar sesión?")) {
+        sessionStorage.clear();
+        window.location.reload();
     }
 });
 
@@ -89,6 +102,14 @@ document.getElementById('loginPass').addEventListener('keypress', (e) => {
 });
 document.getElementById('loginUser').addEventListener('keypress', (e) => {
     if (e.key === 'Enter') document.getElementById('loginPass').focus();
+});
+
+// Alerta de seguridad para evitar recargas accidentales a mitad de clase
+window.addEventListener('beforeunload', (event) => {
+    if (alumnosSeleccionados.length > 0) {
+        event.preventDefault();
+        event.returnValue = ''; 
+    }
 });
 
 // 2. CARGA DE GRUPOS Y DETECCIÓN DEL MODO ADMIN
@@ -100,18 +121,27 @@ const controlesAdmin = document.getElementById('controlesAdmin');
 
 function cargarConfiguracionUsuario() {
     if (usuarioActual.toLowerCase() === 'admin') {
-        // MODO COMODÍN ADMIN
         controlsCardGrupo.style.display = 'none';
         panelAlumnos.style.display = 'flex';
         controlesProfesor.style.display = 'none';
         controlesAdmin.style.display = 'flex';
         
-        alumnosDisponibles = [];
-        alumnosSeleccionados = [];
-        actualizarSelectorAlumnos();
-        renderizarChips();
+        const sesionAlumnosSel = sessionStorage.getItem('alumnosSeleccionados');
+        if (sesionAlumnosSel) {
+            alumnosSeleccionados = JSON.parse(sesionAlumnosSel);
+            alumnosDisponibles = JSON.parse(sessionStorage.getItem('alumnosDisponibles') || '[]');
+            actualizarSelectorAlumnos();
+            renderizarChips();
+            if (alumnosSeleccionados.length >= 4) {
+                document.getElementById('btnCalcular').click();
+            }
+        } else {
+            alumnosDisponibles = [];
+            alumnosSeleccionados = [];
+            actualizarSelectorAlumnos();
+            renderizarChips();
+        }
     } else {
-        // MODO PROFESOR
         controlsCardGrupo.style.display = 'flex';
         panelAlumnos.style.display = 'none';
         controlesProfesor.style.display = 'flex';
@@ -126,23 +156,45 @@ function cargarConfiguracionUsuario() {
             opt.textContent = nombreGrupo;
             selectGrupo.appendChild(opt);
         });
+
+        const sesionGrupo = sessionStorage.getItem('grupoActual');
+        if (sesionGrupo && gruposDelProfe.includes(sesionGrupo)) {
+            selectGrupo.value = sesionGrupo;
+            grupoActual = sesionGrupo;
+            alumnosDisponibles = JSON.parse(sessionStorage.getItem('alumnosDisponibles') || JSON.stringify(BASE_DE_DATOS[usuarioActual].grupos[grupoActual]));
+            alumnosSeleccionados = JSON.parse(sessionStorage.getItem('alumnosSeleccionados') || '[]');
+            panelAlumnos.style.display = 'flex';
+            actualizarSelectorAlumnos();
+            renderizarChips();
+            if (alumnosSeleccionados.length >= 4) {
+                document.getElementById('btnCalcular').click();
+            }
+        }
     }
 }
 
-// Evento cuando un profesor elige su grupo
 selectGrupo.addEventListener('change', (e) => {
     const grupoSeleccionado = e.target.value;
     if (grupoSeleccionado) {
         grupoActual = grupoSeleccionado;
+        sessionStorage.setItem('grupoActual', grupoSeleccionado);
         alumnosDisponibles = [...BASE_DE_DATOS[usuarioActual].grupos[grupoActual]];
         alumnosSeleccionados = [];
+        guardarEstadoSesion();
         panelAlumnos.style.display = 'flex';
         actualizarSelectorAlumnos();
         renderizarChips();
     } else {
+        grupoActual = null;
+        sessionStorage.removeItem('grupoActual');
         panelAlumnos.style.display = 'none';
     }
 });
+
+function guardarEstadoSesion() {
+    sessionStorage.setItem('alumnosDisponibles', JSON.stringify(alumnosDisponibles));
+    sessionStorage.setItem('alumnosSeleccionados', JSON.stringify(alumnosSeleccionados));
+}
 
 // 3. SELECCIÓN DE ALUMNOS
 function barajarArray(array) {
@@ -168,11 +220,14 @@ function actualizarSelectorAlumnos() {
     document.getElementById('contadorAlumnos').textContent = alumnosSeleccionados.length;
     document.getElementById('btnCalcular').disabled = alumnosSeleccionados.length < 4;
     
-    document.getElementById('sectionPreTask').style.display = 'none';
-    document.getElementById('sectionSimulation').style.display = 'none';
-    document.getElementById('blockInteraccion3').style.display = 'none';
-    document.getElementById('sectionPostTask').style.display = 'none';
-    document.getElementById('btnInteraccion3').style.display = 'none';
+    if (alumnosSeleccionados.length < 4) {
+        document.getElementById('sectionPreTask').style.display = 'none';
+        document.getElementById('sectionSimulation').style.display = 'none';
+        document.getElementById('blockInteraccion3').style.display = 'none';
+        document.getElementById('sectionPostTask').style.display = 'none';
+        document.getElementById('btnInteraccion3').style.display = 'none';
+    }
+    guardarEstadoSesion();
 }
 
 function renderizarChips() {
@@ -186,12 +241,23 @@ function renderizarChips() {
     alumnosSeleccionados.forEach(nombre => {
         const chip = document.createElement('div');
         chip.className = 'chip';
-        chip.innerHTML = `${nombre} <button class="chip-remove" onclick="quitarAlumno('${nombre}')">×</button>`;
+        
+        const spanTexto = document.createElement('span');
+        spanTexto.textContent = nombre;
+        
+        const btnQuitar = document.createElement('button');
+        btnQuitar.className = 'chip-remove';
+        btnQuitar.textContent = '×';
+        btnQuitar.addEventListener('click', () => {
+            quitarAlumno(nombre);
+        });
+        
+        chip.appendChild(spanTexto);
+        chip.appendChild(btnQuitar);
         contenedorChips.appendChild(chip);
     });
 }
 
-// Botones Modo Profesor
 function agregarAlumno() {
     const nombre = document.getElementById('alumnoSelect').value;
     if (!nombre) return;
@@ -201,7 +267,7 @@ function agregarAlumno() {
     renderizarChips();
 }
 
-window.quitarAlumno = function(nombre) {
+function quitarAlumno(nombre) {
     alumnosSeleccionados = alumnosSeleccionados.filter(n => n !== nombre);
     if (usuarioActual.toLowerCase() !== 'admin') {
         alumnosDisponibles.push(nombre);
@@ -219,7 +285,6 @@ document.getElementById('btnAgregarTodos').addEventListener('click', () => {
     renderizarChips();
 });
 
-// Botón Especial Modo Admin
 document.getElementById('btnGenerarAdmin').addEventListener('click', () => {
     const cantidadStr = document.getElementById('adminInputNum').value;
     const num = parseInt(cantidadStr);
@@ -349,12 +414,12 @@ function renderInteraccion3() {
         let b = table.base;
 
         if (hasR && hasZ && !hasA) { grupos.push([b['R'], b['A'], hasZ]); grupos.push([b['Z'], b['V'], hasR]); } 
-        else if (hasR && hasA && !hasZ) { grupos.push([b['R'], b['A']]); grupos.push([b['Z'], hasR]); grupos.push([b['V'], hasA]); } 
+        else if (hasR && hasA && !hasZ) { grupos.push([b['R'], hasA]); grupos.push([b['Z'], hasR]); grupos.push([b['V'], hasA]); } 
         else if (hasR && hasA && hasZ) { grupos.push([b['R'], hasZ]); grupos.push([b['A'], hasR, b['V']]); grupos.push([b['Z'], hasA]); } 
-        else if (hasR && !hasA && !hasZ) { grupos.push([b['R'], b['A']]); grupos.push([b['Z'], b['V'], hasR]); } 
-        else if (hasA && !hasR && !hasZ) { grupos.push([b['R'], b['A']]); grupos.push([b['Z'], b['V'], hasA]); } 
+        else if (hasR && !hasA && !hasZ) { grupos.push([b['R'], hasA]); grupos.push([b['Z'], b['V'], hasR]); } 
+        else if (hasA && !hasR && !hasZ) { grupos.push([b['R'], hasA]); grupos.push([b['Z'], b['V'], hasA]); } 
         else if (hasZ && !hasR && !hasA) { grupos.push([b['R'], b['A'], hasZ]); grupos.push([b['Z'], b['V']]); } 
-        else { grupos.push([b['R'], b['A']]); grupos.push([b['Z'], b['V']]); }
+        else { grupos.push([b['R'], hasA]); grupos.push([b['Z'], b['V']]); }
 
         let subtextos = [];
         exIn.forEach(ex => {
@@ -378,3 +443,11 @@ function crearTarjetaMesa(mesaId, grupos, extrasRonda1 = [], subtitulo = "") {
     div.innerHTML = tituloHtml + gruposHtml;
     return div;
 }
+
+// Comprobación automática al cargar la página por si hubo recarga accidental
+window.addEventListener('DOMContentLoaded', () => {
+    const sesionUsuario = sessionStorage.getItem('usuarioActual');
+    if (sesionUsuario) {
+        iniciarSesionExitosa(sesionUsuario);
+    }
+});
