@@ -1,439 +1,233 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
+/* --- CONFIGURACIÓN BASE DE TIPOGRAFÍA MÁS GRANDE --- */
+html {
+    font-size: 17px; 
+}
+
+/* --- PALETA DE COLORES (MODO CLARO - ALTO CONTRASTE) --- */
 :root {
-    --bg-page: #f8fafc;
+    --bg-page: #f6f6f4; 
     --card-bg: #ffffff;
-    --text-main: #0f172a;
-    --text-muted: #64748b;
+    --card-header-bg: #fafafa;
+    --text-main: #334155;
+    --text-muted: #475569; 
     --border-color: #e2e8f0;
-    --primary: #4f46e5;
-    --primary-hover: #4338ca;
     
-    /* Colores pasteles elegantes para los roles */
-    --rojo-bg: #fef2f2; --rojo-text: #991b1b; --rojo-border: #fca5a5;
-    --amar-bg: #fefce8; --amar-text: #854d0e; --amar-border: #fde047;
-    --azul-bg: #eff6ff; --azul-text: #1e40af; --azul-border: #93c5fd;
-    --verd-bg: #f0fdf4; --verd-text: #166534; --verd-border: #86efac;
+    /* Botones principales - Azul mate/menos vibrante */
+    --primary: #5c88c4; 
+    --primary-hover: #4971a8;
+    --btn-text: #ffffff;
+    
+    --input-bg: #ffffff;
+    --group-box-bg: #f8fafc;
+    
+    /* Fichas de alumnos - Transparencia suave y texto oscuro para contraste perfecto */
+    --chip-bg: rgba(92, 136, 196, 0.25);
+    --chip-text: #1e3a8a; /* Azul marino intenso */
+    --chip-hover: rgba(92, 136, 196, 0.4);
+    
+    /* Cajas de información */
+    --info-bg: #eff6ff;
+    --info-text: #1e40af; 
+    --info-border: #bfdbfe;
+
+    --rojo-bg: #fff0f0; --rojo-text: #d32f2f; --rojo-border: #ffcdd2;
+    --amar-bg: #fff9e6; --amar-text: #d48806; --amar-border: #ffe082;
+    --azul-bg: #eef6fc; --azul-text: #1976d2; --azul-border: #bbdefb;
+    --verd-bg: #f0f9f0; --verd-text: #2e7d32; --verd-border: #c8e6c9;
 }
 
-* { 
-    box-sizing: border-box; 
-    margin: 0; 
-    padding: 0; 
-    font-family: 'Inter', system-ui, -apple-system, sans-serif; 
+/* --- PALETA DE COLORES (MODO NOCTURNO - ESTILO YOUTUBE) --- */
+[data-theme="dark"] {
+    --bg-page: #0f0f0f; 
+    --card-bg: #212121; 
+    --card-header-bg: #0f0f0f;
+    --text-main: #f1f1f1; 
+    --text-muted: #aaaaaa; 
+    --border-color: #303030; 
+    
+    /* Azul apagado para no cansar la vista en modo oscuro */
+    --primary: #5c9bc4; 
+    --primary-hover: #7bb5db;
+    --btn-text: #0f0f0f; 
+    
+    --input-bg: #121212;
+    --group-box-bg: #272727; 
+    
+    /* Fichas de alumnos (estilo etiquetas) */
+    --chip-bg: rgba(92, 155, 196, 0.15);
+    --chip-text: #e0f0ff;
+    --chip-hover: rgba(92, 155, 196, 0.25);
+    
+    --info-bg: #212121;
+    --info-text: #5c9bc4;
+    --info-border: #303030;
+
+    --rojo-bg: #2c1716; --rojo-text: #ff8983; --rojo-border: #4d2321;
+    --amar-bg: #2c2516; --amar-text: #f7cb4d; --amar-border: #4d3e21;
+    --azul-bg: #16242c; --azul-text: #5c9bc4; --azul-border: #213c4d;
+    --verd-bg: #162c1e; --verd-text: #61b376; --verd-border: #214d2f;
 }
 
-body { 
-    background-color: var(--bg-page); 
-    color: var(--text-main); 
-    line-height: 1.6; 
-    padding: 2.5rem 1rem; 
-}
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', system-ui, sans-serif; }
 
-.container { 
-    max-width: 1200px; 
-    margin: 0 auto; 
-    display: none; 
-}
+body { background-color: var(--bg-page); color: var(--text-main); line-height: 1.6; padding: 2.5rem 1rem; transition: background-color 0.3s ease, color 0.3s ease; }
+.container { max-width: 1200px; margin: 0 auto; display: none; }
 
-/* Pantalla de Inicio de Sesión (Modal moderno) */
+/* Botón Flotante de Tema */
+.theme-toggle {
+    position: fixed; top: 1.5rem; right: 1.5rem; background: var(--card-bg); color: var(--text-main);
+    border: 1px solid var(--border-color); border-radius: 50%; width: 3.5rem; height: 3.5rem;
+    font-size: 1.5rem; cursor: pointer; z-index: 10000; display: flex; align-items: center;
+    justify-content: center; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.theme-toggle:hover { transform: scale(1.1) rotate(15deg); border-color: var(--primary); }
+
+/* Pantalla de Inicio de Sesión */
 #loginOverlay {
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(15, 23, 42, 0.75);
-    backdrop-filter: blur(8px);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-    padding: 1rem;
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(15, 15, 15, 0.85); backdrop-filter: blur(8px);
+    display: flex; justify-content: center; align-items: center; z-index: 9999; padding: 1rem;
 }
-
 .login-card {
-    background: white;
-    padding: 2.5rem 2rem;
-    border-radius: 16px;
-    width: 100%;
-    max-width: 400px;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    display: flex;
-    flex-direction: column;
-    gap: 1.25rem;
-    border: 1px solid var(--border-color);
+    background: var(--card-bg); padding: 3rem 2rem; border-radius: 24px;
+    width: 100%; max-width: 420px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    display: flex; flex-direction: column; gap: 1.25rem; border: 1px solid var(--border-color);
 }
-
-.login-card h2 { 
-    text-align: center; 
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--text-main);
-    border: none; 
-    padding: 0;
-    margin: 0;
-}
-
-.input-group { 
-    display: flex; 
-    flex-direction: column; 
-    gap: 0.5rem; 
-}
-
-.input-group label { 
-    font-size: 0.85rem; 
-    font-weight: 600; 
-    color: var(--text-muted); 
-}
-
+.login-card h2 { text-align: center; font-size: 1.85rem; font-weight: 800; color: var(--text-main); }
+.input-group { display: flex; flex-direction: column; gap: 0.5rem; }
+.input-group label { font-size: 0.95rem; font-weight: 600; color: var(--text-muted); padding-left: 0.5rem; }
 .input-group input, select {
-    padding: 0.75rem 1rem;
-    border: 1px solid var(--border-color);
-    border-radius: 10px;
-    font-size: 0.95rem;
-    outline: none;
-    transition: all 0.2s ease;
-    background-color: #f8fafc;
+    padding: 0.95rem 1.2rem; border: 1px solid var(--border-color);
+    border-radius: 12px; font-size: 1.05rem; outline: none;
+    transition: all 0.2s ease; background-color: var(--input-bg); color: var(--text-main);
 }
+.input-group input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(92, 136, 196, 0.3); }
+.login-error { color: #ff4e45; font-size: 0.95rem; text-align: center; min-height: 1.2rem; font-weight: 600; }
 
-.input-group input:focus, select:focus { 
-    border-color: var(--primary); 
-    background-color: #fff;
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-}
+/* Encabezados y Textos */
+h1 { font-size: 2.35rem; font-weight: 800; text-align: center; margin-bottom: 0.25rem; letter-spacing: -0.025em; }
+p.subtitle { text-align: center; color: var(--text-muted); margin-bottom: 2.5rem; font-size: 1.05rem; }
+h2 { font-size: 1.45rem; font-weight: 800; margin-bottom: 1.25rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--border-color); color: var(--text-main); }
+h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--text-main); }
 
-.login-error { 
-    color: #dc2626; 
-    font-size: 0.85rem; 
-    text-align: center; 
-    min-height: 1.2rem; 
-    font-weight: 500;
-}
-
-/* Encabezados principales */
-h1 { 
-    font-size: 2.25rem; 
-    font-weight: 800; 
-    text-align: center; 
-    margin-bottom: 0.25rem; 
-    color: var(--text-main); 
-    letter-spacing: -0.025em;
-}
-
-p.subtitle { 
-    text-align: center; 
-    color: var(--text-muted); 
-    margin-bottom: 2.5rem; 
-    font-size: 1rem;
-}
-
-h2 { 
-    font-size: 1.35rem; 
-    font-weight: 700; 
-    margin-bottom: 1.25rem; 
-    padding-bottom: 0.5rem; 
-    border-bottom: 2px solid var(--border-color); 
-    color: var(--text-main);
-}
-
-h3 { 
-    font-size: 1rem; 
-    font-weight: 600; 
-    margin-bottom: 0.75rem; 
-    color: var(--text-main); 
-}
-
-/* Tarjetas de Control */
+/* Controles de Alumnos */
 .controls-card { 
-    background: var(--card-bg); 
-    padding: 1.75rem; 
-    border-radius: 16px; 
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03); 
-    margin-bottom: 2rem; 
-    display: flex; 
-    flex-direction: column; 
-    gap: 1.25rem; 
-    border: 1px solid var(--border-color);
+    background: var(--card-bg); padding: 1.75rem; border-radius: 20px; 
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); margin-bottom: 2rem; 
+    display: flex; flex-direction: column; gap: 1.25rem; border: 1px solid var(--border-color);
 }
-
-.selector-row { 
-    display: flex; 
-    gap: 0.75rem; 
-    flex-wrap: wrap; 
-    align-items: center; 
-}
+.selector-row { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; }
 
 button { 
-    padding: 0.75rem 1.5rem; 
-    background-color: var(--primary); 
-    color: white; 
-    border: none; 
-    border-radius: 10px; 
-    font-size: 0.95rem; 
-    font-weight: 600; 
-    cursor: pointer; 
+    padding: 0.95rem 1.85rem; background-color: var(--primary); color: var(--btn-text); 
+    border: none; border-radius: 999px;
+    font-size: 1.05rem; font-weight: 700; cursor: pointer; 
     transition: all 0.2s ease; 
-    box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
 }
+button:hover { background-color: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+button:active { transform: translateY(0); }
+button:disabled { background-color: var(--border-color); color: var(--text-muted); cursor: not-allowed; transform: none; box-shadow: none; }
 
-button:hover { 
-    background-color: var(--primary-hover); 
-    transform: translateY(-1px);
-}
+.btn-secondary { background-color: var(--group-box-bg); color: var(--text-main); border: 1px solid var(--border-color); }
+.btn-secondary:hover { background-color: var(--border-color); }
 
-button:active { 
-    transform: translateY(0); 
-}
-
-button:disabled { 
-    background-color: #cbd5e1; 
-    cursor: not-allowed; 
-    transform: none; 
-    box-shadow: none;
-}
-
-.btn-secondary { 
-    background-color: #f1f5f9; 
-    color: #475569; 
-    border: 1px solid #cbd5e1; 
-    box-shadow: none;
-}
-
-.btn-secondary:hover { 
-    background-color: #e2e8f0; 
-    color: #1e293b;
-}
-
-/* Contenedor de fichas (Chips) */
 .chips-container { 
-    display: flex; 
-    flex-wrap: wrap; 
-    gap: 0.6rem; 
-    min-height: 60px; 
-    padding: 1.25rem; 
-    background: #f8fafc; 
-    border: 1px dashed #cbd5e1; 
-    border-radius: 12px; 
+    display: flex; flex-wrap: wrap; gap: 0.75rem; min-height: 70px; padding: 1.25rem; 
+    background: var(--bg-page); border: 1px dashed var(--border-color); border-radius: 16px; 
 }
 
+/* Fichas de alumnos */
 .chip { 
-    background: #e0e7ff; 
-    color: #3730a3; 
-    padding: 0.45rem 0.9rem; 
-    border-radius: 999px; 
-    font-size: 0.88rem; 
-    font-weight: 500; 
-    display: flex; 
-    align-items: center; 
-    gap: 0.5rem; 
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    background: var(--chip-bg); color: var(--chip-text); padding: 0.55rem 1.1rem; border-radius: 999px; 
+    font-size: 1rem; font-weight: 600; display: flex; align-items: center; gap: 0.6rem; 
+    border: 1px solid rgba(0,0,0,0.05); backdrop-filter: blur(4px);
 }
-
 .chip-remove { 
-    cursor: pointer; 
-    font-weight: bold; 
-    color: #4f46e5; 
-    background: none; 
-    border: none; 
-    padding: 0; 
-    display: inline-flex; 
-    width: 18px; 
-    height: 18px; 
-    align-items: center; 
-    justify-content: center; 
-    border-radius: 50%; 
-    transition: background 0.2s;
+    cursor: pointer; font-weight: bold; color: var(--chip-text); background: none; border: none; 
+    padding: 0; width: 22px; height: 22px; display: inline-flex; align-items: center; 
+    justify-content: center; border-radius: 50%; transition: all 0.2s; box-shadow: none; opacity: 0.7;
 }
-
-.chip-remove:hover { 
-    background: #c7d2fe; 
-}
+.chip-remove:hover { opacity: 1; background: rgba(0, 0, 0, 0.08); transform: none; }
 
 .action-row { 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    margin-top: 0.5rem; 
-    padding-top: 1.25rem; 
-    border-top: 1px solid var(--border-color); 
-    flex-wrap: wrap; 
-    gap: 1rem;
+    display: flex; justify-content: space-between; align-items: center; 
+    padding-top: 1.25rem; border-top: 1px solid var(--border-color); flex-wrap: wrap; gap: 1rem;
+    font-size: 1.05rem; font-weight: 500;
 }
 
-#btnInteraccion3 { 
-    background-color: #0f172a; 
-    margin-top: 1.5rem; 
-    width: 100%; 
-    font-size: 1.05rem; 
-    padding: 1rem; 
-}
+#btnInteraccion3 { margin-top: 1.5rem; width: 100%; font-size: 1.15rem; padding: 1.1rem; }
 
-#btnInteraccion3:hover { 
-    background-color: #1e293b; 
-}
+/* --- GRILLAS DE RESULTADOS --- */
+.grid-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; margin-bottom: 2.5rem; }
+.grid-tables { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 2rem; }
 
-/* Grillas y Tarjetas de Estadísticas */
-.grid-stats { 
-    display: grid; 
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); 
-    gap: 1.25rem; 
-    margin-bottom: 2.5rem; 
-}
-
-.grid-tables { 
-    display: grid; 
-    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); 
-    gap: 1.5rem; 
-}
-
+/* Tarjetas de Estadísticas (Roles) */
 .stat-card { 
-    background: var(--card-bg); 
-    padding: 1.5rem; 
-    border-radius: 16px; 
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); 
-    text-align: center; 
-    border: 1px solid var(--border-color); 
+    background: var(--card-bg); padding: 1.75rem 1.5rem; border-radius: 20px; 
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); text-align: center; 
+    border: 1px solid var(--border-color);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
-
-.stat-number { 
-    font-size: 2.75rem; 
-    font-weight: 800; 
-    margin: 0.5rem 0; 
-    line-height: 1; 
-}
-
-.stat-label { 
-    font-size: 0.85rem; 
-    font-weight: 700; 
-    text-transform: uppercase; 
-    letter-spacing: 0.05em; 
-}
-
+.stat-card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+.stat-number { font-size: 3.2rem; font-weight: 800; margin: 0.5rem 0; line-height: 1; }
+.stat-label { font-size: 0.95rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; }
 .names-list { 
-    font-size: 0.88rem; 
-    margin-top: 1rem; 
-    text-align: left; 
-    padding-top: 0.85rem; 
-    border-top: 1px solid rgba(0,0,0,0.06); 
-    display: flex; 
-    flex-direction: column; 
-    gap: 0.35rem; 
+    font-size: 1rem; margin-top: 1rem; text-align: left; padding-top: 1rem; 
+    border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 0.4rem; 
 }
 
-.names-list span { 
-    font-weight: 500; 
-    opacity: 0.95; 
-}
-
-/* Tarjetas de Mesas */
+/* --- TARJETAS DE MESAS --- */
 .table-card { 
-    background: var(--card-bg); 
-    padding: 1.75rem; 
-    border-radius: 16px; 
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.02); 
-    border-top: 6px solid var(--border-color); 
-    display: flex; 
-    flex-direction: column; 
-    gap: 1.25rem; 
-    border-left: 1px solid var(--border-color);
-    border-right: 1px solid var(--border-color);
-    border-bottom: 1px solid var(--border-color);
+    background: var(--card-bg); padding: 0; border-radius: 20px; 
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); border: 1px solid var(--border-color);
+    border-top: 4px solid var(--border-color); display: flex; flex-direction: column; 
+    overflow: hidden; transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
-
-.simulation-block { 
-    margin-top: 2rem; 
-}
-
-.sub-section-title { 
-    font-size: 1.15rem; 
-    font-weight: 700; 
-    color: var(--text-main); 
-    margin-bottom: 0.75rem; 
-    display: flex; 
-    align-items: center; 
-    gap: 0.5rem; 
+.table-card:hover { transform: translateY(-6px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
+.table-card h3 {
+    background: var(--card-header-bg); padding: 1.25rem 1.5rem; margin: 0;
+    border-bottom: 1px solid var(--border-color); font-size: 1.2rem; color: var(--text-main);
 }
 
 .group-box { 
-    background: #f8fafc; 
-    padding: 1.1rem; 
-    border-radius: 12px; 
-    border: 1px solid #e2e8f0; 
+    margin: 1.25rem 1.5rem 0 1.5rem; background: var(--group-box-bg); padding: 1.25rem; 
+    border-radius: 12px; border: 1px solid var(--border-color); 
 }
+.group-box:last-child { margin-bottom: 1.5rem; }
+.group-title { font-size: 0.85rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.8rem; letter-spacing: 0.05em; }
+.badge-container { display: flex; flex-direction: column; gap: 0.75rem; }
 
-.group-title { 
-    font-size: 0.78rem; 
-    font-weight: 700; 
-    color: var(--text-muted); 
-    text-transform: uppercase; 
-    margin-bottom: 0.6rem; 
-    letter-spacing: 0.05em;
-}
-
-.badge-container { 
-    display: flex; 
-    flex-direction: column; 
-    gap: 0.6rem; 
-}
-
+/* --- GAFETES DE ALUMNOS --- */
 .badge { 
-    display: inline-flex; 
-    align-items: center; 
-    gap: 0.6rem; 
-    padding: 0.6rem 0.9rem; 
-    border-radius: 10px; 
-    font-size: 0.92rem; 
-    font-weight: 600; 
-    border: 1px solid transparent; 
-    width: 100%; 
-    box-shadow: 0 1px 2px rgba(0,0,0,0.02); 
+    display: flex; align-items: center; gap: 0.75rem; padding: 0.85rem 1.25rem; border-radius: 8px; 
+    font-size: 1.05rem; font-weight: 500; width: 100%; border: 1px solid var(--border-color); 
 }
-
 .badge.extra { 
-    box-shadow: 0 0 0 2px #0f172a; 
-    position: relative; 
+    box-shadow: 0 0 0 1px var(--text-muted); position: relative; margin-top: 0.5rem; 
 }
-
 .badge.extra::after { 
-    content: '★'; 
-    position: absolute; 
-    top: -6px; 
-    right: -6px; 
-    background: #0f172a; 
-    color: white; 
-    font-size: 0.6rem; 
-    width: 16px; 
-    height: 16px; 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-    border-radius: 50%; 
+    content: '★ EXTRA'; position: absolute; top: -12px; right: 12px; 
+    background: var(--text-muted); color: var(--bg-page); font-size: 0.7rem; font-weight: 800;
+    padding: 0.2rem 0.6rem; display: flex; align-items: center; justify-content: center; 
+    border-radius: 999px; letter-spacing: 0.05em;
 }
 
-/* Colores de los roles */
+/* Colores Dinámicos de los Gafetes */
 .color-R { background: var(--rojo-bg); color: var(--rojo-text); border-color: var(--rojo-border); }
 .color-A { background: var(--amar-bg); color: var(--amar-text); border-color: var(--amar-border); }
 .color-Z { background: var(--azul-bg); color: var(--azul-text); border-color: var(--azul-border); }
 .color-V { background: var(--verd-bg); color: var(--verd-text); border-color: var(--verd-border); }
 
-.section-container { 
-    margin-bottom: 3.5rem; 
-    display: none; 
-    animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); 
-}
-
-@keyframes fadeIn { 
-    from { opacity: 0; transform: translateY(12px); } 
-    to { opacity: 1; transform: translateY(0); } 
-}
+/* Misceláneos */
+.simulation-block { margin-top: 2rem; }
+.sub-section-title { font-size: 1.2rem; font-weight: 800; color: var(--text-main); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+.section-container { margin-bottom: 3.5rem; display: none; animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 
 .info-box { 
-    background: #eff6ff; 
-    color: #1e40af; 
-    padding: 1.1rem 1.25rem; 
-    border-radius: 12px; 
-    border-left: 4px solid #3b82f6; 
-    margin-bottom: 1.5rem; 
-    font-size: 0.92rem; 
-    border-top: 1px solid #dbeafe;
-    border-right: 1px solid #dbeafe;
-    border-bottom: 1px solid #dbeafe;
+    background: var(--info-bg); color: var(--info-text); padding: 1.35rem; 
+    border-radius: 12px; border-left: 4px solid var(--primary); margin-bottom: 1.5rem; 
+    font-size: 1.05rem; border: 1px solid var(--info-border); border-left: 4px solid var(--primary);
 }

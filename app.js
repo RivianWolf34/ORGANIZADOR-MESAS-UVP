@@ -1,3 +1,24 @@
+// --- LÓGICA DE MODO NOCTURNO ---
+const themeToggle = document.getElementById('themeToggle');
+const body = document.body;
+
+if (localStorage.getItem('theme') === 'dark') {
+    body.setAttribute('data-theme', 'dark');
+    themeToggle.textContent = '☀️';
+}
+
+themeToggle.addEventListener('click', () => {
+    if (body.getAttribute('data-theme') === 'dark') {
+        body.removeAttribute('data-theme');
+        localStorage.setItem('theme', 'light');
+        themeToggle.textContent = '🌙';
+    } else {
+        body.setAttribute('data-theme', 'dark');
+        localStorage.setItem('theme', 'dark');
+        themeToggle.textContent = '☀️';
+    }
+});
+
 // Constantes visuales actualizadas
 const COLOR_NAMES = { 'R': 'Rojo', 'A': 'Amar', 'Z': 'Azul', 'V': 'Verde' };
 const COLOR_ICONS = { 'R': '🔴', 'A': '🟡', 'Z': '🔵', 'V': '🟢' };
@@ -10,6 +31,14 @@ let alumnosSeleccionados = [];
 let globalTables = [];
 let numMesas = 0;
 
+// BASE DE DATOS INTERNA OCULTA (Incluye al Admin protegido aquí)
+// Nota: Puedes cambiar este hash por el de la contraseña que túprefieras para el Admin.
+const USUARIOS_INTERNOS = {
+    "admin": {
+        hash: "2ee62f16ca41fe7879853975d5fcb4cb858f6edb5fd0355cfb7948d997e6b6a9" // Hash de ejemplo (vacío o cámbialo por tu contraseña cifrada)
+    }
+};
+
 // Generador de Cifrado SHA-256
 async function generarHash(texto) {
     const encoder = new TextEncoder();
@@ -19,26 +48,34 @@ async function generarHash(texto) {
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-// 1. SISTEMA DE LOGIN
+// 1. SISTEMA DE LOGIN (Busca tanto en datos.js como en la base interna oculta)
 document.getElementById('btnLogin').addEventListener('click', async () => {
     const userRaw = document.getElementById('loginUser').value.trim(); 
     const pass = document.getElementById('loginPass').value.trim();
     const errorEl = document.getElementById('loginError');
 
-    const user = Object.keys(BASE_DE_DATOS).find(k => k.toLowerCase() === userRaw.toLowerCase());
+    // Combinamos las bases de datos para que reconozca al Admin interno y a los profes de datos.js
+    let baseTotal = {};
+    if (typeof BASE_DE_DATOS !== 'undefined') {
+        baseTotal = { ...BASE_DE_DATOS };
+    }
+    // Añadimos el admin interno con su clave en minúscula
+    baseTotal["admin"] = USUARIOS_INTERNOS["admin"];
 
-    if (!user) {
+    const userKey = Object.keys(baseTotal).find(k => k.toLowerCase() === userRaw.toLowerCase());
+
+    if (!userKey) {
         errorEl.textContent = 'Usuario no encontrado';
         return;
     }
 
     const hashGenerado = await generarHash(pass);
 
-    if (hashGenerado === BASE_DE_DATOS[user].hash) {
-        usuarioActual = user;
+    if (hashGenerado === baseTotal[userKey].hash) {
+        usuarioActual = userKey;
         document.getElementById('loginOverlay').style.display = 'none';
         document.getElementById('mainContainer').style.display = 'block';
-        document.getElementById('nombreProfeUI').textContent = user;
+        document.getElementById('nombreProfeUI').textContent = userKey.toUpperCase();
         
         cargarConfiguracionUsuario();
     } else {
