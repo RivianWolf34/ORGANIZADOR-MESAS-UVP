@@ -413,13 +413,36 @@ function renderInteraccion3() {
         let hasR = exIn.find(e => e.color === 'R'), hasA = exIn.find(e => e.color === 'A'), hasZ = exIn.find(e => e.color === 'Z');
         let b = table.base;
 
-        if (hasR && hasZ && !hasA) { grupos.push([b['R'], b['A'], hasZ]); grupos.push([b['Z'], b['V'], hasR]); } 
-        else if (hasR && hasA && !hasZ) { grupos.push([b['R'], hasA]); grupos.push([b['Z'], hasR]); grupos.push([b['V'], hasA]); } 
-        else if (hasR && hasA && hasZ) { grupos.push([b['R'], hasZ]); grupos.push([b['A'], hasR, b['V']]); grupos.push([b['Z'], hasA]); } 
-        else if (hasR && !hasA && !hasZ) { grupos.push([b['R'], hasA]); grupos.push([b['Z'], b['V'], hasR]); } 
-        else if (hasA && !hasR && !hasZ) { grupos.push([b['R'], hasA]); grupos.push([b['Z'], b['V'], hasA]); } 
-        else if (hasZ && !hasR && !hasA) { grupos.push([b['R'], b['A'], hasZ]); grupos.push([b['Z'], b['V']]); } 
-        else { grupos.push([b['R'], hasA]); grupos.push([b['Z'], b['V']]); }
+        if (hasR && hasZ && !hasA) { 
+            grupos.push([b['R'], b['A'], hasZ]); 
+            grupos.push([b['Z'], b['V'], hasR]); 
+        } 
+        else if (hasR && hasA && !hasZ) { 
+            grupos.push([b['R'], b['A']]); 
+            grupos.push([b['Z'], hasR]); 
+            grupos.push([b['V'], hasA]); 
+        } 
+        else if (hasR && hasA && hasZ) { 
+            grupos.push([b['R'], hasZ]); 
+            grupos.push([b['A'], hasR, b['V']]); 
+            grupos.push([b['Z'], hasA]); 
+        } 
+        else if (hasR && !hasA && !hasZ) { 
+            grupos.push([b['R'], b['A']]); 
+            grupos.push([b['Z'], b['V'], hasR]); 
+        } 
+        else if (hasA && !hasR && !hasZ) { 
+            grupos.push([b['R'], b['A']]); 
+            grupos.push([b['Z'], b['V'], hasA]); 
+        } 
+        else if (hasZ && !hasR && !hasA) { 
+            grupos.push([b['R'], b['A'], hasZ]); 
+            grupos.push([b['Z'], b['V']]); 
+        } 
+        else { 
+            grupos.push([b['R'], b['A']]); 
+            grupos.push([b['Z'], b['V']]); 
+        }
 
         let subtextos = [];
         exIn.forEach(ex => {
