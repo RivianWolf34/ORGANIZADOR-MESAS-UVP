@@ -1,5 +1,3 @@
-// Base de datos de Profesores, Grupos y Alumnos
-
 const BASE_DE_DATOS = {
     "Astrid": {
         hash: "d7f10092509bb26ff44027c42183fbd2aebb529f3fba8cd7599b1a3eed2da94f",
@@ -26,7 +24,29 @@ const BASE_DE_DATOS = {
                 "Jennifer Gayosso",
                 "Pia Medina",
                 "Rebeca Palma"
+            ], // <-- Se añade esta coma para separar los elementos del objeto
+            "GRUPO S090 - Nivel A1": [ // <-- El segundo grupo va directamente aquí
+                "Alessandra Barranco",
+                "Fernando Cano",
+                "Renata Castelan",
+                "Yñigo De la Rosa",
+                "Aarón Díaz",
+                "Daira Dominguez",
+                "Anuar Guerra",
+                "Barbara Hernandez",
+                "Juan Huesca",
+                "Samuel Jimenez",
+                "Antonella Martinez",
+                "Fernanda Mendieta",
+                "Isabella Pasquel",
+                "Iker Pedraza",
+                "Ximena Rojas",
+                "Jose Saldaña",
+                "Diego Saldaña",
+                "Valeria Sanchez",
+                "Kai Solano",
+                "Ximena Vázquez"
             ]
         }
-    },
+    }
 };
