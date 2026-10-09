@@ -132,7 +132,15 @@ function renderizarFichas() {
     });
 }
 
-// BOTÓN: VOLVER A ASISTENCIA (Conserva la lista actual)
+function barajarArray(array) {
+    let arr = [...array];
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+}
+
 window.volverAAsistencia = function() {
     pararBomba();
     bombContainer.style.display = 'none';
@@ -144,8 +152,12 @@ window.volverAAsistencia = function() {
 let isTicking = false;
 let explosionTimer = null;
 let panicTimer = null;
-let tickInterval = null; // Controla el sonido del tic-tac
+let tickInterval = null; 
 let currentVictim = "";
+
+// Variables para Preguntas
+let listaDeRetos = [];
+let indiceReto = 0;
 
 const btnStartRound = document.getElementById('btnStartRound');
 const btnPassBomb = document.getElementById('btnPassBomb');
@@ -153,8 +165,19 @@ const bombVisual = document.getElementById('bombVisual');
 const victimName = document.getElementById('victimName');
 const gameStatus = document.getElementById('gameStatus');
 const bombArena = document.getElementById('bombArena');
+const challengeText = document.getElementById('challengeText');
 
 document.getElementById('btnComenzarJuego').addEventListener('click', () => {
+    
+    // Leer y barajar preguntas
+    const rawText = document.getElementById('listaRetosRaw').value;
+    let retos = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    
+    if(retos.length === 0) retos = ["¡Escucha al profesor!"];
+    
+    listaDeRetos = barajarArray(retos);
+    indiceReto = 0;
+
     panelAsistencia.style.display = 'none';
     document.getElementById('controlsCardGrupo').style.display = 'none'; 
     bombContainer.style.display = 'flex';
@@ -162,13 +185,14 @@ document.getElementById('btnComenzarJuego').addEventListener('click', () => {
 });
 
 function resetUI() {
-    clearInterval(tickInterval); // Aseguramos que el sonido pare
+    clearInterval(tickInterval); 
     bombVisual.className = 'bomb-icon';
     bombVisual.innerText = "💣";
     victimName.innerText = "¿QUIÉN EMPIEZA?";
     victimName.style.color = "var(--text-main)";
     gameStatus.innerText = "BOMBA DESACTIVADA";
     gameStatus.className = "status-badge";
+    challengeText.innerText = "¿Pregunta?";
     bombArena.classList.remove('arena-danger');
     btnStartRound.style.display = 'inline-block';
     btnPassBomb.disabled = true;
@@ -176,7 +200,7 @@ function resetUI() {
 }
 
 window.iniciarRonda = function() {
-    if (audioCtx.state === 'suspended') audioCtx.resume(); // Despierta el audio del navegador
+    if (audioCtx.state === 'suspended') audioCtx.resume(); 
 
     isTicking = true;
     btnStartRound.style.display = 'none';
@@ -190,21 +214,18 @@ window.iniciarRonda = function() {
     bombVisual.innerText = "💣";
     victimName.style.color = "var(--text-main)";
     
-    pasarBomba(); // Escoge al primer alumno
+    pasarBomba(); // Escoge al primer alumno y pone la primera pregunta
 
-    // Inicia el Tic-Tac normal (1 cada segundo)
     clearInterval(tickInterval);
-    playTickSound(false); // Suena el primero inmediatamente
+    playTickSound(false); 
     tickInterval = setInterval(() => playTickSound(false), 1000);
 
-    // Calcula tiempo de explosión aleatorio entre 15 y 35 segundos
+    // Calcula tiempo de explosión (15 a 35 seg)
     const tiempoHastaExplosion = Math.floor(Math.random() * (35000 - 15000 + 1)) + 15000;
     
-    // Configura la explosión
     clearTimeout(explosionTimer);
     explosionTimer = setTimeout(explotar, tiempoHastaExplosion);
 
-    // Configura el momento de pánico (los últimos 5 segundos palpita rápido)
     clearTimeout(panicTimer);
     panicTimer = setTimeout(activarPanico, tiempoHastaExplosion - 5000);
 };
@@ -212,11 +233,22 @@ window.iniciarRonda = function() {
 window.pasarBomba = function() {
     if (!isTicking) return;
     
+    // Filtrar alumno
     let posiblesVictimas = alumnosPresentes.filter(alumno => alumno !== currentVictim);
     if (posiblesVictimas.length === 0) posiblesVictimas = alumnosPresentes; 
-    
     currentVictim = posiblesVictimas[Math.floor(Math.random() * posiblesVictimas.length)];
     victimName.innerText = currentVictim;
+
+    // Actualizar pregunta
+    if (indiceReto >= listaDeRetos.length) {
+        // Mezclar si se acabaron (y no es el texto por defecto)
+        if (listaDeRetos.length > 1 && listaDeRetos[0] !== "¡Escucha al profesor!") {
+            listaDeRetos = barajarArray(listaDeRetos);
+        }
+        indiceReto = 0;
+    }
+    challengeText.innerText = listaDeRetos[indiceReto];
+    indiceReto++;
 };
 
 function activarPanico() {
@@ -224,7 +256,6 @@ function activarPanico() {
     bombVisual.className = 'bomb-icon ticking-fast';
     bombArena.classList.add('arena-danger');
 
-    // Cambiamos el Tic-Tac a modo rápido y agudo (cada 300 ms)
     clearInterval(tickInterval);
     tickInterval = setInterval(() => playTickSound(true), 300);
 }
@@ -235,12 +266,10 @@ function explotar() {
     btnStartRound.style.display = 'inline-block';
     btnStartRound.innerText = "Jugar Otra Ronda";
     
-    // Apaga el tic-tac y limpia tiempos
     clearInterval(tickInterval);
     clearTimeout(explosionTimer);
     clearTimeout(panicTimer);
 
-    // Efectos visuales de explosión
     bombVisual.className = 'bomb-icon exploded';
     bombVisual.innerText = "💥";
     
@@ -249,7 +278,6 @@ function explotar() {
     
     victimName.style.color = "var(--rojo-text)";
     
-    // Reproduce el sonido de explosión
     playExplosionSound();
 }
 
@@ -259,7 +287,7 @@ function pararBomba() {
     resetUI();
 }
 
-// Permitir pasar la bomba con la barra espaciadora
+// Oprimir barra espaciadora
 document.addEventListener('keydown', (e) => {
     if (e.code === 'Space' && isTicking) {
         e.preventDefault();
@@ -271,18 +299,15 @@ document.addEventListener('keydown', (e) => {
 const AudioContext = window.AudioContext || window.webkitAudioContext;
 const audioCtx = new AudioContext();
 
-// Función del Tic-Tac
 function playTickSound(isPanic) {
     if (audioCtx.state === 'suspended') audioCtx.resume();
     
     const osc = audioCtx.createOscillator();
     const gainNode = audioCtx.createGain();
     
-    // Si es pánico suena más agudo (1200Hz) si es normal suena grave (800Hz)
     osc.type = 'triangle';
     osc.frequency.setValueAtTime(isPanic ? 1200 : 800, audioCtx.currentTime);
     
-    // Envolvente ultra-rápida para que suene como un golpe seco ("tic")
     gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
     gainNode.gain.linearRampToValueAtTime(0.15, audioCtx.currentTime + 0.01);
     gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
@@ -294,7 +319,6 @@ function playTickSound(isPanic) {
     osc.stop(audioCtx.currentTime + 0.1);
 }
 
-// Función de Explosión
 function playExplosionSound() {
     if (audioCtx.state === 'suspended') audioCtx.resume();
     

@@ -6,13 +6,15 @@
     <title>Rapid Response Buzzer - Portal de Herramientas</title>
     <link rel="stylesheet" href="styles.css">
     <style>
-        .buzzer-container { display: none; max-width: 1200px; margin: 0 auto; flex-direction: column; gap: 1.5rem; }
+        .buzzer-container { display: none; max-width: 1200px; margin: 0 auto; flex-direction: column; gap: 1.5rem; position: relative; }
         
+        /* Panel de Pregunta */
         .challenge-panel { 
             background: var(--card-bg); padding: 1.5rem; border-radius: 20px; 
             border: 3px solid var(--primary); text-align: center; 
             box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: flex; 
             align-items: center; justify-content: center; flex-direction: column; min-height: 120px;
+            position: relative; z-index: 1; transition: z-index 0.1s;
         }
         .challenge-text { font-size: 3rem; font-weight: 800; color: var(--text-main); letter-spacing: -1px; }
 
@@ -37,7 +39,6 @@
         .status-msg { font-size: 1.8rem; font-weight: 800; height: 40px; text-transform: uppercase; letter-spacing: 2px; }
         
         kbd { background-color: var(--input-bg); color: var(--text-main); padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border-color); box-shadow: 0 2px 0 var(--border-color); font-family: monospace; font-weight: bold; margin: 0 4px; }
-        
         .empty-state { font-size: 1.5rem; color: var(--text-muted); font-weight: bold; }
 
         .judge-controls { display: none; gap: 1rem; margin-top: 1rem; }
@@ -48,19 +49,46 @@
         .btn-incorrect { background-color: #F44336; color: white; }
         .btn-incorrect:hover { background-color: #e53935; }
 
+        /* Reloj de Cuenta Regresiva */
+        .countdown-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 1000;
+            display: none; align-items: center; justify-content: center; flex-direction: column;
+        }
+        .countdown-number {
+            font-size: 15rem; font-weight: 900; color: white;
+            text-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            animation: pulseCount 1s infinite; margin-top: 150px;
+        }
+        @keyframes pulseCount { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.15); opacity: 0.8; } 100% { transform: scale(1); opacity: 1; } }
+
+        /* Seccion Final de Insignias / Niveles */
         .leaderboard-section { display: none; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 24px; padding: 2.5rem; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        .leaderboard-table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; }
-        .leaderboard-table th, .leaderboard-table td { padding: 1.2rem; text-align: left; border-bottom: 1px solid var(--border-color); font-size: 1.1rem; }
-        .leaderboard-table th { font-weight: 800; background: var(--card-header-bg); text-transform: uppercase; font-size: 0.9rem; letter-spacing: 1px; color: var(--text-muted); }
-        .podium-1 { background-color: var(--amar-bg); color: var(--amar-text); font-weight: bold; }
-        .podium-2 { background-color: var(--info-bg); color: var(--info-text); font-weight: bold; }
-        .podium-3 { background-color: var(--rojo-bg); color: var(--rojo-text); font-weight: bold; }
+        .tiers-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; text-align: left; margin-top: 1.5rem; }
         
+        .tier-box { border-radius: 16px; padding: 1.5rem; border: 2px solid var(--border-color); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .tier-gold { border-color: #FFD700; background: rgba(255, 215, 0, 0.08); }
+        .tier-silver { border-color: #C0C0C0; background: rgba(192, 192, 192, 0.08); }
+        .tier-bronze { border-color: #CD7F32; background: rgba(205, 127, 50, 0.08); }
+        .tier-none { border-color: var(--border-color); background: var(--bg-page); }
+        
+        /* Nuevo Diseño de Encabezados de Tabla */
+        .tier-header { border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 0.8rem; margin-bottom: 0.8rem; }
+        .tier-header h3 { margin: 0; font-size: 1.3rem; }
+        .tier-pts { font-size: 0.9rem; color: var(--text-muted); font-weight: 600; display: block; margin-top: 0.2rem; }
+        
+        .tier-gold h3 { color: #b8950b; }
+        .tier-silver h3 { color: #6e6e6e; }
+        .tier-bronze h3 { color: #8a481c; }
+        
+        .tier-list { list-style: none; padding: 0; margin: 0; }
+        .tier-list li { padding: 0.5rem 0; border-bottom: 1px dashed rgba(0,0,0,0.05); font-weight: 700; font-size: 1.1rem; color: var(--text-main); }
+        .empty-tier { color: var(--text-muted); font-weight: normal !important; font-style: italic; }
+
         /* Cajas de texto y Prompts */
         .prompt-box { background: var(--info-bg); border: 1px solid var(--info-border); padding: 1.2rem; border-radius: 12px; margin-bottom: 1.5rem; font-size: 0.95rem; color: var(--info-text); }
         .prompt-code { display: block; background: rgba(0,0,0,0.05); padding: 12px; border-radius: 8px; color: var(--text-main); user-select: all; margin-top: 10px; font-family: monospace; font-size: 1.05rem; }
-        
-        .textarea-custom { width: 100%; padding: 1rem; border: 2px solid var(--border-color); border-radius: 12px; font-size: 1.1rem; background: var(--input-bg); color: var(--text-main); resize: vertical; min-height: 120px; transition: border-color 0.2s; font-family: inherit; }
+        .textarea-custom { width: 100%; padding: 1rem; border: 2px solid var(--border-color); border-radius: 12px; font-size: 1.1rem; background: var(--input-bg); color: var(--text-main); resize: vertical; min-height: 120px; font-family: inherit; }
         .textarea-custom:focus { border-color: var(--primary); outline: none; }
         .inputs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
     </style>
@@ -68,6 +96,11 @@
 <body>
     <button id="btnLogout" class="logout-btn" style="display: none;">🚪 Cerrar sesión</button>
     <button id="themeToggle" class="theme-toggle" title="Cambiar tema">🌙</button>
+
+    <!-- Overlay de Conteo Regresivo -->
+    <div id="countdownOverlay" class="countdown-overlay">
+        <div id="countdownNumber" class="countdown-number">5</div>
+    </div>
 
     <div id="loginOverlay">
         <div class="login-card">
@@ -100,11 +133,9 @@
         </div>
 
         <div class="controls-card" id="panelAsistencia" style="display: none;">
-            
             <div style="margin-bottom: 2rem; border-bottom: 2px dashed var(--border-color); padding-bottom: 1.5rem;">
                 <h3 style="margin-bottom: 0.5rem;">📝 1. Carga de Retos (Opcional)</h3>
                 
-                <!-- PROMPT DE AYUDA -->
                 <div class="prompt-box">
                     <strong>🤖 Prompt recomendado para IA (Cópialo y pégalo):</strong>
                     <code class="prompt-code">
@@ -118,7 +149,7 @@ Optional context/examples to follow: [OPTIONAL EXAMPLES]
 
                 <div class="info-box" style="margin-bottom: 1.5rem; border-left: 4px solid var(--amar-text); background: var(--amar-bg); color: var(--text-main);">
                     <strong>INSTRUCCIONES:</strong> La Línea 1 de Preguntas siempre estará emparejada con la Línea 1 de Respuestas (aunque el sistema las baraje al azar).
-                    <br><strong style="color: red;">IMPORTANTE:</strong> No puedes rellenar solo las respuestas. Si dejas ambas vacías, podrás dictar con tu voz.
+                    <br><strong style="color: red;">IMPORTANTE:</strong> No puedes rellenar ÚNICAMENTE las respuestas. Si dejas ambas vacías, podrás dictar con tu voz.
                 </div>
                 
                 <div class="inputs-grid">
@@ -154,9 +185,10 @@ Optional context/examples to follow: [OPTIONAL EXAMPLES]
             <div class="teacher-action-bar">
                 <button id="btnSiguientePareja" class="btn-action">🔄 Llamar Nueva Pareja</button>
                 <button id="btnSaltarReto" class="btn-action">⏭️ Saltar Pregunta</button>
-                <button id="btnTerminar" class="btn-action btn-danger">⏹️ Terminar y Ver Tabla</button>
+                <button id="btnTerminar" class="btn-action btn-danger">⏹️ Terminar y Ver Resultados</button>
             </div>
 
+            <!-- Panel de Pregunta (Se mantiene encima del reloj) -->
             <div class="challenge-panel" id="challengePanel">
                 <div id="challengeText" class="challenge-text">¡PREPÁRENSE!</div>
             </div>
@@ -186,14 +218,40 @@ Optional context/examples to follow: [OPTIONAL EXAMPLES]
         </div>
 
         <div id="leaderboardSection" class="leaderboard-section">
-            <h2>🏆 Tabla de Posiciones Final</h2>
-            <p style="color: var(--text-muted); margin-bottom: 1rem;">Resultados de la sesión de hoy.</p>
-            <table class="leaderboard-table">
-                <thead><tr><th style="width: 10%;">Pos</th><th>Alumno</th><th style="text-align: right;">Puntuación</th></tr></thead>
-                <tbody id="leaderboardBody"></tbody>
-            </table>
+            <h2>🏆 Resultados de la Sesión</h2>
             
-            <div style="display: flex; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;">
+            <div class="tiers-container">
+                <div class="tier-box tier-gold">
+                    <div class="tier-header">
+                        <h3>🥇 Nivel Oro</h3>
+                        <span class="tier-pts">3 o más pts</span>
+                    </div>
+                    <ul id="listGold" class="tier-list"></ul>
+                </div>
+                <div class="tier-box tier-silver">
+                    <div class="tier-header">
+                        <h3>🥈 Nivel Plata</h3>
+                        <span class="tier-pts">2 pts</span>
+                    </div>
+                    <ul id="listSilver" class="tier-list"></ul>
+                </div>
+                <div class="tier-box tier-bronze">
+                    <div class="tier-header">
+                        <h3>🥉 Nivel Bronce</h3>
+                        <span class="tier-pts">1 pt</span>
+                    </div>
+                    <ul id="listBronze" class="tier-list"></ul>
+                </div>
+                <div class="tier-box tier-none">
+                    <div class="tier-header">
+                        <h3>🎖️ Sigue Participando</h3>
+                        <span class="tier-pts">0 pts</span>
+                    </div>
+                    <ul id="listNone" class="tier-list"></ul>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 1rem; margin-top: 2.5rem; flex-wrap: wrap;">
                 <button onclick="volverAConfiguracion()" style="flex: 2; min-width: 250px;">⚙️ Configurar Siguiente Clase</button>
                 <button onclick="window.location.href='index.html'" class="btn-secondary" style="flex: 1; min-width: 200px;">🏠 Menú Principal</button>
             </div>
