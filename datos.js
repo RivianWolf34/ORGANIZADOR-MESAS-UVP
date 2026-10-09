@@ -25,6 +25,7 @@ const BASE_DE_DATOS = {
                 "Pia Medina",
                 "Rebeca Palma"
             ], // <-- Se añade esta coma para separar los elementos del objeto
+            
             "GRUPO S090 - Nivel A1": [ // <-- El segundo grupo va directamente aquí
                 "Alessandra Barranco",
                 "Fernando Cano",

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticking Time Bomb</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .bomb-container { display: none; max-width: 900px; margin: 0 auto; flex-direction: column; gap: 1.5rem; text-align: center; }
+        
+        /* Barra de navegación superior de la herramienta */
+        .nav-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .nav-btn { background-color: var(--group-box-bg); color: var(--text-main); border: 1px solid var(--border-color); padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .nav-btn:hover { background-color: var(--border-color); }
+
+        /* Arena de la Bomba */
+        .bomb-arena { background: var(--card-bg); padding: 3rem 2rem; border-radius: 24px; border: 3px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.1); position: relative; overflow: hidden; transition: border-color 0.3s; }
+        .arena-danger { border-color: var(--rojo-text); box-shadow: 0 0 40px rgba(211, 47, 47, 0.3); }
+
+        /* Animaciones de la Bomba */
+        .bomb-icon { font-size: 8rem; line-height: 1; margin-bottom: 1rem; transition: transform 0.1s; display: inline-block; filter: drop-shadow(0 10px 10px rgba(0,0,0,0.2)); }
+        
+        @keyframes pulse-slow { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        @keyframes pulse-fast { 0% { transform: scale(1) rotate(-5deg); } 50% { transform: scale(1.2) rotate(5deg); } 100% { transform: scale(1) rotate(-5deg); } }
+        @keyframes explode { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(2); opacity: 1; } 100% { transform: scale(3); opacity: 0; } }
+
+        .ticking-slow { animation: pulse-slow 1s infinite; }
+        .ticking-fast { animation: pulse-fast 0.3s infinite; filter: drop-shadow(0 0 20px red); }
+        .exploded { animation: explode 0.5s forwards; }
+
+        .victim-name { font-size: 4rem; font-weight: 900; color: var(--text-main); letter-spacing: -1px; margin: 1rem 0; min-height: 80px; text-transform: uppercase; }
+        
+        .status-badge { display: inline-block; background: var(--info-bg); color: var(--info-text); padding: 0.5rem 1.5rem; border-radius: 999px; font-weight: 800; font-size: 1.2rem; letter-spacing: 2px; text-transform: uppercase; border: 2px solid var(--info-border); }
+        .status-boom { background: var(--rojo-bg); color: var(--rojo-text); border-color: var(--rojo-border); }
+
+        /* Controles de Profesor */
+        .teacher-action-bar { display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap; margin-top: 1.5rem; }
+        .btn-pass { font-size: 1.5rem; padding: 1rem 3rem; background-color: var(--verd-text); color: white; border-radius: 999px; box-shadow: 0 6px 0 #1b5e20; transition: all 0.1s; }
+        .btn-pass:active { transform: translateY(6px); box-shadow: 0 0 0 #1b5e20; }
+        .btn-pass:disabled { background-color: var(--border-color); box-shadow: 0 6px 0 #999; cursor: not-allowed; }
+        
+        .btn-start { font-size: 1.2rem; padding: 0.8rem 2rem; background-color: var(--primary); color: white; }
+    </style>
+</head>
+<body>
+    <button id="btnLogout" class="logout-btn" style="display: none;">🚪 Cerrar sesión</button>
+    <button id="themeToggle" class="theme-toggle" title="Cambiar tema">🌙</button>
+
+    <!-- Overlay de Login -->
+    <div id="loginOverlay">
+        <div class="login-card">
+            <h2>Acceso al Sistema</h2>
+            <p style="text-align: center; color: var(--text-muted); font-size: 0.9rem;">Introduce tus credenciales</p>
+            <div class="input-group">
+                <label for="loginUser">Usuario</label>
+                <input type="text" id="loginUser" autocomplete="off" placeholder="Usuario">
+            </div>
+            <div class="input-group">
+                <label for="loginPass">Contraseña</label>
+                <input type="password" id="loginPass" placeholder="••••••••">
+            </div>
+            <div id="loginError" class="login-error"></div>
+            <button id="btnLogin" style="width: 100%;">Entrar</button>
+        </div>
+    </div>
+
+    <div class="container" id="mainContainer">
+        <h1 style="margin-bottom: 2rem;">💣 Ticking Time Bomb</h1>
+
+        <!-- Selector de Grupos -->
+        <div class="controls-card" id="controlsCardGrupo" style="background-color: var(--group-box-bg);">
+            <h3 style="margin: 0 0 0.5rem 0;">Profesor: <span id="nombreProfeUI" style="color: var(--primary);"></span></h3>
+            <div class="input-group">
+                <label for="grupoSelect">Selecciona el grupo de hoy:</label>
+                <select id="grupoSelect">
+                    <option value="">Cargando grupos...</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Panel de Asistencia -->
+        <div class="controls-card" id="panelAsistencia" style="display: none;">
+            <h3 style="margin-bottom: 0.2rem;">👥 Filtro de Asistencia</h3>
+            <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">Agrega a los presentes y quita a los ausentes. La bomba solo caerá sobre los alumnos en la lista verde.</p>
+            
+            <div class="selector-row">
+                <select id="alumnoSelect"><option value="">Selecciona un alumno...</option></select>
+                <button id="btnAgregarAlumno">Añadir</button>
+                <button id="btnAgregarTodos" class="btn-secondary">Añadir Todos los del Grupo</button>
+            </div>
+
+            <div class="chips-container" id="alumnosPresentesContenedor"></div>
+
+            <div class="action-row">
+                <div>Alumnos en riesgo: <strong id="contadorPresentes">0</strong> (Mínimo 2)</div>
+                <button id="btnComenzarJuego" disabled>Entrar a la Arena ▶</button>
+            </div>
+        </div>
+
+        <!-- Arena del Juego -->
+        <div class="bomb-container" id="bombContainer">
+            <div class="nav-bar">
+                <button onclick="volverAAsistencia()" class="nav-btn">⬅ Volver a Asistencia</button>
+                <button onclick="window.location.href='index.html'" class="nav-btn">🏠 Menú Principal</button>
+            </div>
+
+            <div class="bomb-arena" id="bombArena">
+                <div id="gameStatus" class="status-badge">BOMBA DESACTIVADA</div>
+                
+                <!-- Animación de la bomba -->
+                <div style="margin-top: 2rem; height: 150px; display: flex; justify-content: center; align-items: center;">
+                    <div id="bombVisual" class="bomb-icon">💣</div>
+                </div>
+
+                <!-- Nombre del Alumno -->
+                <div id="victimName" class="victim-name">¿QUIÉN EMPIEZA?</div>
+
+                <!-- Controles -->
+                <div class="teacher-action-bar">
+                    <button id="btnStartRound" class="btn-start" onclick="iniciarRonda()">🔥 Encender Mecha</button>
+                    <button id="btnPassBomb" class="btn-pass" onclick="pasarBomba()" disabled>Pasar Bomba ⏭️</button>
+                </div>
+            </div>
+            
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 1rem;">
+                <strong>Instrucciones:</strong> Enciende la mecha. Haz una pregunta al alumno en pantalla. Si acierta, oprime "Pasar Bomba" inmediatamente para lanzársela a alguien más antes de que explote.
+            </p>
+        </div>
+    </div>
+
+    <script src="datos.js"></script>
+    <script src="bomb.js"></script>
+</body>
+</html>

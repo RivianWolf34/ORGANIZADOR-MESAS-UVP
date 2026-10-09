@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rapid Response Buzzer - Portal de Herramientas</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .buzzer-container { display: none; max-width: 1200px; margin: 0 auto; flex-direction: column; gap: 1.5rem; }
+        
+        .challenge-panel { 
+            background: var(--card-bg); padding: 1.5rem; border-radius: 20px; 
+            border: 3px solid var(--primary); text-align: center; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: flex; 
+            align-items: center; justify-content: center; flex-direction: column; min-height: 120px;
+        }
+        .challenge-text { font-size: 3rem; font-weight: 800; color: var(--text-main); letter-spacing: -1px; }
+
+        .teacher-action-bar { display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
+        .btn-action { background-color: var(--card-bg); color: var(--text-main); border: 2px solid var(--border-color); font-size: 1.05rem; }
+        .btn-action:hover { border-color: var(--primary); background-color: var(--info-bg); }
+        .btn-danger { background-color: var(--rojo-bg); color: var(--rojo-text); border: 2px solid var(--rojo-border); }
+        .btn-danger:hover { background-color: #ffcccc; }
+
+        .arena { display: flex; height: 50vh; width: 100%; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.15); border: 2px solid var(--border-color); }
+        .player-zone { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: all 0.2s ease; position: relative; padding: 2rem; text-align: center; }
+        
+        .p1-zone { background-color: var(--azul-bg); color: var(--azul-text); border-right: 1px solid var(--border-color); }
+        .p2-zone { background-color: var(--rojo-bg); color: var(--rojo-text); border-left: 1px solid var(--border-color); }
+        
+        .winner { background-color: var(--verd-bg); color: var(--verd-text); transform: scale(1.02); z-index: 5; box-shadow: 0 0 30px rgba(97, 179, 118, 0.4); }
+        .loser { filter: grayscale(100%) opacity(0.5); }
+
+        .player-name { font-size: 2.5rem; font-weight: 800; line-height: 1.2; margin-bottom: 0.5rem; }
+        .score { font-size: 5rem; font-weight: 800; margin: 1rem 0; text-shadow: 2px 2px 0px rgba(0,0,0,0.1); }
+        .key-hint { font-size: 1.1rem; opacity: 0.8; font-weight: 600; margin-bottom: 1rem; }
+        .status-msg { font-size: 1.8rem; font-weight: 800; height: 40px; text-transform: uppercase; letter-spacing: 2px; }
+        
+        kbd { background-color: var(--input-bg); color: var(--text-main); padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border-color); box-shadow: 0 2px 0 var(--border-color); font-family: monospace; font-weight: bold; margin: 0 4px; }
+        
+        .empty-state { font-size: 1.5rem; color: var(--text-muted); font-weight: bold; }
+
+        .judge-controls { display: none; gap: 1rem; margin-top: 1rem; }
+        .judge-btn { font-size: 2rem; padding: 0.8rem 2rem; border-radius: 12px; cursor: pointer; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.1s; display: flex; align-items: center; justify-content: center;}
+        .judge-btn:active { transform: scale(0.95); }
+        .btn-correct { background-color: #4CAF50; color: white; }
+        .btn-correct:hover { background-color: #43a047; }
+        .btn-incorrect { background-color: #F44336; color: white; }
+        .btn-incorrect:hover { background-color: #e53935; }
+
+        .leaderboard-section { display: none; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 24px; padding: 2.5rem; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .leaderboard-table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; }
+        .leaderboard-table th, .leaderboard-table td { padding: 1.2rem; text-align: left; border-bottom: 1px solid var(--border-color); font-size: 1.1rem; }
+        .leaderboard-table th { font-weight: 800; background: var(--card-header-bg); text-transform: uppercase; font-size: 0.9rem; letter-spacing: 1px; color: var(--text-muted); }
+        .podium-1 { background-color: var(--amar-bg); color: var(--amar-text); font-weight: bold; }
+        .podium-2 { background-color: var(--info-bg); color: var(--info-text); font-weight: bold; }
+        .podium-3 { background-color: var(--rojo-bg); color: var(--rojo-text); font-weight: bold; }
+        
+        /* Cajas de texto y Prompts */
+        .prompt-box { background: var(--info-bg); border: 1px solid var(--info-border); padding: 1.2rem; border-radius: 12px; margin-bottom: 1.5rem; font-size: 0.95rem; color: var(--info-text); }
+        .prompt-code { display: block; background: rgba(0,0,0,0.05); padding: 12px; border-radius: 8px; color: var(--text-main); user-select: all; margin-top: 10px; font-family: monospace; font-size: 1.05rem; }
+        
+        .textarea-custom { width: 100%; padding: 1rem; border: 2px solid var(--border-color); border-radius: 12px; font-size: 1.1rem; background: var(--input-bg); color: var(--text-main); resize: vertical; min-height: 120px; transition: border-color 0.2s; font-family: inherit; }
+        .textarea-custom:focus { border-color: var(--primary); outline: none; }
+        .inputs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
+    </style>
+</head>
+<body>
+    <button id="btnLogout" class="logout-btn" style="display: none;">🚪 Cerrar sesión</button>
+    <button id="themeToggle" class="theme-toggle" title="Cambiar tema">🌙</button>
+
+    <div id="loginOverlay">
+        <div class="login-card">
+            <h2>Acceso al Sistema</h2>
+            <p style="text-align: center; color: var(--text-muted); font-size: 0.9rem;">Introduce tus credenciales</p>
+            <div class="input-group">
+                <label for="loginUser">Usuario (Profesor / Admin)</label>
+                <input type="text" id="loginUser" autocomplete="off" placeholder="Usuario">
+            </div>
+            <div class="input-group">
+                <label for="loginPass">Contraseña</label>
+                <input type="password" id="loginPass" placeholder="••••••••">
+            </div>
+            <div id="loginError" class="login-error"></div>
+            <button id="btnLogin" style="width: 100%;">Entrar</button>
+        </div>
+    </div>
+
+    <div class="container" id="mainContainer">
+        <h1 style="margin-bottom: 2rem;">Rapid Response Buzzer</h1>
+
+        <div class="controls-card" id="controlsCardGrupo" style="background-color: var(--group-box-bg);">
+            <h3 style="margin: 0 0 0.5rem 0;">Profesor: <span id="nombreProfeUI" style="color: var(--primary);"></span></h3>
+            <div class="input-group">
+                <label for="grupoSelect">Selecciona el grupo de hoy:</label>
+                <select id="grupoSelect">
+                    <option value="">Cargando grupos...</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="controls-card" id="panelAsistencia" style="display: none;">
+            
+            <div style="margin-bottom: 2rem; border-bottom: 2px dashed var(--border-color); padding-bottom: 1.5rem;">
+                <h3 style="margin-bottom: 0.5rem;">📝 1. Carga de Retos (Opcional)</h3>
+                
+                <!-- PROMPT DE AYUDA -->
+                <div class="prompt-box">
+                    <strong>🤖 Prompt recomendado para IA (Cópialo y pégalo):</strong>
+                    <code class="prompt-code">
+Act as an English teacher. Generate [NUMBER] questions and answers about [TOPIC]. <br><br>
+Provide the output in two separate lists.<br>
+List 1: Only the questions, numbered line by line.<br>
+List 2: Only the answers, numbered line by line, matching the exact order of List 1.<br><br>
+Optional context/examples to follow: [OPTIONAL EXAMPLES]
+                    </code>
+                </div>
+
+                <div class="info-box" style="margin-bottom: 1.5rem; border-left: 4px solid var(--amar-text); background: var(--amar-bg); color: var(--text-main);">
+                    <strong>INSTRUCCIONES:</strong> La Línea 1 de Preguntas siempre estará emparejada con la Línea 1 de Respuestas (aunque el sistema las baraje al azar).
+                    <br><strong style="color: red;">IMPORTANTE:</strong> No puedes rellenar solo las respuestas. Si dejas ambas vacías, podrás dictar con tu voz.
+                </div>
+                
+                <div class="inputs-grid">
+                    <div>
+                        <label style="font-weight: 800; display: block; margin-bottom: 0.5rem;">❓ PREGUNTAS</label>
+                        <textarea id="listaRetosRaw" class="textarea-custom" placeholder="Ejemplo:&#10;1. Sinónimo de Fast&#10;2. Traduce: Murciélago&#10;3. Antónimo de Cheap"></textarea>
+                    </div>
+                    <div>
+                        <label style="font-weight: 800; display: block; margin-bottom: 0.5rem;">💡 RESPUESTAS (Opcional)</label>
+                        <textarea id="listaRespuestasRaw" class="textarea-custom" placeholder="Ejemplo:&#10;1. Quick&#10;2. Bat&#10;3. Expensive"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <h3 style="margin-bottom: 0.2rem;">👥 2. Filtro de Asistencia</h3>
+            <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">Agrega a los alumnos presentes o quita con la '×' a los que faltaron hoy.</p>
+            
+            <div class="selector-row">
+                <select id="alumnoSelect"><option value="">Selecciona un alumno...</option></select>
+                <button id="btnAgregarAlumno">Añadir</button>
+                <button id="btnAgregarTodos" class="btn-secondary">Añadir Todos los del Grupo</button>
+            </div>
+
+            <div class="chips-container" id="alumnosPresentesContenedor"></div>
+
+            <div class="action-row">
+                <div>Alumnos listos para jugar: <strong id="contadorPresentes">0</strong> (Mínimo 2)</div>
+                <button id="btnComenzarJuego" disabled>Iniciar Juego ▶</button>
+            </div>
+        </div>
+
+        <div class="buzzer-container" id="buzzerContainer">
+            <div class="teacher-action-bar">
+                <button id="btnSiguientePareja" class="btn-action">🔄 Llamar Nueva Pareja</button>
+                <button id="btnSaltarReto" class="btn-action">⏭️ Saltar Pregunta</button>
+                <button id="btnTerminar" class="btn-action btn-danger">⏹️ Terminar y Ver Tabla</button>
+            </div>
+
+            <div class="challenge-panel" id="challengePanel">
+                <div id="challengeText" class="challenge-text">¡PREPÁRENSE!</div>
+            </div>
+
+            <div class="arena">
+                <div id="zone1" class="player-zone p1-zone">
+                    <div class="key-hint">Jugador Izquierdo - Tecla <kbd>A</kbd></div>
+                    <div id="name1" class="player-name empty-state">Presiona "Llamar Nueva Pareja"</div>
+                    <div id="score1" class="score">-</div>
+                    <div id="status1" class="status-msg"></div>
+                    <div id="judge1" class="judge-controls">
+                        <button class="judge-btn btn-correct" onclick="juezCorrecto(1)">✅</button>
+                        <button class="judge-btn btn-incorrect" onclick="juezIncorrecto(1)">❌</button>
+                    </div>
+                </div>
+                <div id="zone2" class="player-zone p2-zone">
+                    <div class="key-hint">Jugador Derecho - Tecla <kbd>L</kbd></div>
+                    <div id="name2" class="player-name empty-state">para iniciar</div>
+                    <div id="score2" class="score">-</div>
+                    <div id="status2" class="status-msg"></div>
+                    <div id="judge2" class="judge-controls">
+                        <button class="judge-btn btn-correct" onclick="juezCorrecto(2)">✅</button>
+                        <button class="judge-btn btn-incorrect" onclick="juezIncorrecto(2)">❌</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="leaderboardSection" class="leaderboard-section">
+            <h2>🏆 Tabla de Posiciones Final</h2>
+            <p style="color: var(--text-muted); margin-bottom: 1rem;">Resultados de la sesión de hoy.</p>
+            <table class="leaderboard-table">
+                <thead><tr><th style="width: 10%;">Pos</th><th>Alumno</th><th style="text-align: right;">Puntuación</th></tr></thead>
+                <tbody id="leaderboardBody"></tbody>
+            </table>
+            
+            <div style="display: flex; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;">
+                <button onclick="volverAConfiguracion()" style="flex: 2; min-width: 250px;">⚙️ Configurar Siguiente Clase</button>
+                <button onclick="window.location.href='index.html'" class="btn-secondary" style="flex: 1; min-width: 200px;">🏠 Menú Principal</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="datos.js"></script>
+    <script src="buzzer.js"></script>
+</body>
+</html>

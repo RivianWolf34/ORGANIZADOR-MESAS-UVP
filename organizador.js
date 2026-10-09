@@ -91,9 +91,9 @@ function iniciarSesionExitosa(userKey) {
 
 // Botón de Cerrar Sesión
 document.getElementById('btnLogout').addEventListener('click', () => {
-    if (confirm("¿Estás seguro de que deseas cerrar sesión?")) {
+    if (confirm("¿Estás seguro de que deseas cerrar sesión y volver al menú?")) {
         sessionStorage.clear();
-        window.location.reload();
+        window.location.href = 'index.html'; // <--- Te redirige al menú principal
     }
 });
 
