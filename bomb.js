@@ -14,6 +14,7 @@ themeToggle.addEventListener('click', () => {
 // --- SISTEMA DE LOGIN Y SESIÓN ---
 let usuarioActual = null;
 let grupoActual = null;
+let nivelAplicado = null; 
 
 async function generarHash(texto) {
     const encoder = new TextEncoder();
@@ -27,11 +28,9 @@ document.getElementById('btnLogin').addEventListener('click', async () => {
     const userRaw = document.getElementById('loginUser').value.trim(); 
     const pass = document.getElementById('loginPass').value.trim();
     const errorEl = document.getElementById('loginError');
-
     const userKey = Object.keys(BASE_DE_DATOS).find(k => k.toLowerCase() === userRaw.toLowerCase());
 
     if (!userKey) { errorEl.textContent = 'Usuario no encontrado'; return; }
-
     const hashGenerado = await generarHash(pass);
 
     if (hashGenerado === BASE_DE_DATOS[userKey].hash) {
@@ -49,14 +48,13 @@ document.getElementById('btnLogin').addEventListener('click', async () => {
 
 document.getElementById('btnLogout').addEventListener('click', () => {
     if (confirm("¿Estás seguro de que deseas cerrar sesión y volver al menú principal?")) {
-        sessionStorage.clear();
-        window.location.href = 'index.html';
+        sessionStorage.clear(); window.location.href = 'index.html';
     }
 });
 document.getElementById('loginPass').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('btnLogin').click(); });
 document.getElementById('loginUser').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('loginPass').focus(); });
 
-// --- LÓGICA DE ASISTENCIA ---
+// --- LÓGICA DE ASISTENCIA Y NIVEL ---
 const selectGrupo = document.getElementById('grupoSelect');
 const panelAsistencia = document.getElementById('panelAsistencia');
 const selectAlumno = document.getElementById('alumnoSelect');
@@ -72,11 +70,30 @@ function cargarGruposProfesor() {
     });
 }
 
+// Extractor Regex de Nivel
+function detectarNivel(nombre) {
+    const match = nombre.match(/(A1|A2|B1|B2|C1|C2)/i);
+    return match ? match[0].toUpperCase() : null;
+}
+
 selectGrupo.addEventListener('change', (e) => {
     grupoActual = e.target.value;
     if (grupoActual) {
+        // Carga alumnos
         alumnosDelGrupo = [...BASE_DE_DATOS[usuarioActual].grupos[grupoActual]];
         alumnosPresentes = []; 
+        
+        // Carga Nivel
+        nivelAplicado = detectarNivel(grupoActual);
+        if (nivelAplicado) {
+            document.getElementById('autoLevelDiv').style.display = 'block';
+            document.getElementById('manualLevelDiv').style.display = 'none';
+            document.getElementById('detectedLevelTxt').textContent = nivelAplicado;
+        } else {
+            document.getElementById('autoLevelDiv').style.display = 'none';
+            document.getElementById('manualLevelDiv').style.display = 'flex';
+        }
+
         panelAsistencia.style.display = 'flex';
         bombContainer.style.display = 'none';
         actualizarSelectorAlumnos();
@@ -148,34 +165,46 @@ window.volverAAsistencia = function() {
     panelAsistencia.style.display = 'flex';
 };
 
-// --- MOTOR DE LA BOMBA ---
+// --- MOTOR DE LA BOMBA (MODO AUTO EVALUACIÓN) ---
 let isTicking = false;
 let explosionTimer = null;
 let panicTimer = null;
 let tickInterval = null; 
 let currentVictim = "";
 
-// Variables para Preguntas
 let listaDeRetos = [];
 let indiceReto = 0;
 
 const btnStartRound = document.getElementById('btnStartRound');
-const btnPassBomb = document.getElementById('btnPassBomb');
 const bombVisual = document.getElementById('bombVisual');
 const victimName = document.getElementById('victimName');
 const gameStatus = document.getElementById('gameStatus');
 const bombArena = document.getElementById('bombArena');
 const challengeText = document.getElementById('challengeText');
+const optionsContainer = document.getElementById('optionsContainer');
+const btnOp1 = document.getElementById('btnOp1');
+const btnOp2 = document.getElementById('btnOp2');
 
 document.getElementById('btnComenzarJuego').addEventListener('click', () => {
     
-    // Leer y barajar preguntas
-    const rawText = document.getElementById('listaRetosRaw').value;
-    let retos = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-    
-    if(retos.length === 0) retos = ["¡Escucha al profesor!"];
-    
-    listaDeRetos = barajarArray(retos);
+    // Si no se detectó automático, forzar el del selector manual
+    if (!nivelAplicado) nivelAplicado = document.getElementById('manualLevelSelect').value;
+
+    // Cargar la base de datos
+    const db = DB_BOMBA[nivelAplicado];
+    if(!db || db.preguntas.length === 0) {
+        alert(`⚠️ No hay preguntas cargadas en la Base de Datos para el Nivel ${nivelAplicado}. Por favor, agrégalas en db_bomba.js`);
+        return;
+    }
+
+    // Emparejar y Barajar
+    let pares = [];
+    for(let i=0; i < db.preguntas.length; i++) {
+        if(db.preguntas[i]) {
+            pares.push({ q: db.preguntas[i], c: db.correctas[i], i: db.incorrectas[i] });
+        }
+    }
+    listaDeRetos = barajarArray(pares);
     indiceReto = 0;
 
     panelAsistencia.style.display = 'none';
@@ -193,9 +222,9 @@ function resetUI() {
     gameStatus.innerText = "BOMBA DESACTIVADA";
     gameStatus.className = "status-badge";
     challengeText.innerText = "¿Pregunta?";
+    optionsContainer.style.display = 'none';
     bombArena.classList.remove('arena-danger');
     btnStartRound.style.display = 'inline-block';
-    btnPassBomb.disabled = true;
     isTicking = false;
 }
 
@@ -204,9 +233,8 @@ window.iniciarRonda = function() {
 
     isTicking = true;
     btnStartRound.style.display = 'none';
-    btnPassBomb.disabled = false;
+    optionsContainer.style.display = 'flex';
     
-    // Status visual
     gameStatus.innerText = "¡MECHA ENCENDIDA!";
     gameStatus.className = "status-badge";
     bombArena.classList.remove('arena-danger');
@@ -214,13 +242,13 @@ window.iniciarRonda = function() {
     bombVisual.innerText = "💣";
     victimName.style.color = "var(--text-main)";
     
-    pasarBomba(); // Escoge al primer alumno y pone la primera pregunta
+    // Pasa la bomba al primero
+    pasarTurnoOpcional(false);
 
     clearInterval(tickInterval);
     playTickSound(false); 
     tickInterval = setInterval(() => playTickSound(false), 1000);
 
-    // Calcula tiempo de explosión (15 a 35 seg)
     const tiempoHastaExplosion = Math.floor(Math.random() * (35000 - 15000 + 1)) + 15000;
     
     clearTimeout(explosionTimer);
@@ -230,26 +258,60 @@ window.iniciarRonda = function() {
     panicTimer = setTimeout(activarPanico, tiempoHastaExplosion - 5000);
 };
 
-window.pasarBomba = function() {
+// Función maestra de fluidez: esError = true (Castigo), false (Avanza al sig. alumno)
+function pasarTurnoOpcional(esError) {
     if (!isTicking) return;
     
-    // Filtrar alumno
-    let posiblesVictimas = alumnosPresentes.filter(alumno => alumno !== currentVictim);
-    if (posiblesVictimas.length === 0) posiblesVictimas = alumnosPresentes; 
-    currentVictim = posiblesVictimas[Math.floor(Math.random() * posiblesVictimas.length)];
-    victimName.innerText = currentVictim;
+    if (!esError) {
+        let posiblesVictimas = alumnosPresentes.filter(a => a !== currentVictim);
+        if (posiblesVictimas.length === 0) posiblesVictimas = alumnosPresentes; 
+        currentVictim = posiblesVictimas[Math.floor(Math.random() * posiblesVictimas.length)];
+        victimName.innerText = currentVictim;
+    }
 
-    // Actualizar pregunta
+    // Actualiza pregunta
     if (indiceReto >= listaDeRetos.length) {
-        // Mezclar si se acabaron (y no es el texto por defecto)
-        if (listaDeRetos.length > 1 && listaDeRetos[0] !== "¡Escucha al profesor!") {
-            listaDeRetos = barajarArray(listaDeRetos);
-        }
+        listaDeRetos = barajarArray(listaDeRetos);
         indiceReto = 0;
     }
-    challengeText.innerText = listaDeRetos[indiceReto];
+    
+    let reto = listaDeRetos[indiceReto];
+    challengeText.innerText = reto.q;
+
+    // Baraja las dos opciones (Correcta / Incorrecta)
+    let ops = barajarArray([reto.c, reto.i]);
+    
+    btnOp1.innerText = ops[0];
+    btnOp1.dataset.correct = (ops[0] === reto.c) ? 'true' : 'false';
+    
+    btnOp2.innerText = ops[1];
+    btnOp2.dataset.correct = (ops[1] === reto.c) ? 'true' : 'false';
+
     indiceReto++;
-};
+}
+
+// Interacción del profesor
+window.evaluar = function(btn) {
+    if(!isTicking) return;
+
+    if (btn.dataset.correct === 'true') {
+        // ACIERTO
+        bombArena.classList.remove('flash-green', 'flash-red');
+        void bombArena.offsetWidth; // Trigger reflow
+        bombArena.classList.add('flash-green');
+        
+        playSafeSound();
+        pasarTurnoOpcional(false); // Pasa la bomba a alguien más
+    } else {
+        // ERROR (Castigo)
+        bombArena.classList.remove('flash-green', 'flash-red');
+        void bombArena.offsetWidth; 
+        bombArena.classList.add('flash-red');
+        
+        playErrorSound();
+        pasarTurnoOpcional(true); // Se queda el mismo alumno, pero cambia la pregunta
+    }
+}
 
 function activarPanico() {
     if (!isTicking) return;
@@ -262,9 +324,10 @@ function activarPanico() {
 
 function explotar() {
     isTicking = false;
-    btnPassBomb.disabled = true;
     btnStartRound.style.display = 'inline-block';
     btnStartRound.innerText = "Jugar Otra Ronda";
+    optionsContainer.style.display = 'none';
+    challengeText.innerText = "¡SE ACABÓ EL TIEMPO!";
     
     clearInterval(tickInterval);
     clearTimeout(explosionTimer);
@@ -287,53 +350,35 @@ function pararBomba() {
     resetUI();
 }
 
-// Oprimir barra espaciadora
-document.addEventListener('keydown', (e) => {
-    if (e.code === 'Space' && isTicking) {
-        e.preventDefault();
-        pasarBomba();
-    }
-});
-
 // --- SISTEMA DE SONIDOS SINTETIZADOS (Web Audio API) ---
 const AudioContext = window.AudioContext || window.webkitAudioContext;
 const audioCtx = new AudioContext();
 
 function playTickSound(isPanic) {
     if (audioCtx.state === 'suspended') audioCtx.resume();
-    
     const osc = audioCtx.createOscillator();
     const gainNode = audioCtx.createGain();
-    
     osc.type = 'triangle';
     osc.frequency.setValueAtTime(isPanic ? 1200 : 800, audioCtx.currentTime);
-    
     gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
     gainNode.gain.linearRampToValueAtTime(0.15, audioCtx.currentTime + 0.01);
     gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
-    
     osc.connect(gainNode);
     gainNode.connect(audioCtx.destination);
-    
     osc.start(audioCtx.currentTime);
     osc.stop(audioCtx.currentTime + 0.1);
 }
 
 function playExplosionSound() {
     if (audioCtx.state === 'suspended') audioCtx.resume();
-    
     const duration = 1.5; 
     const bufferSize = audioCtx.sampleRate * duration;
     const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
     const data = buffer.getChannelData(0);
-    
-    for (let i = 0; i < bufferSize; i++) {
-        data[i] = Math.random() * 2 - 1;
-    }
+    for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
     
     const noise = audioCtx.createBufferSource();
     noise.buffer = buffer;
-    
     const filter = audioCtx.createBiquadFilter();
     filter.type = 'lowpass';
     filter.frequency.setValueAtTime(600, audioCtx.currentTime); 
@@ -343,9 +388,32 @@ function playExplosionSound() {
     gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime); 
     gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
     
-    noise.connect(filter);
-    filter.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-    
+    noise.connect(filter); filter.connect(gainNode); gainNode.connect(audioCtx.destination);
     noise.start();
+}
+
+function playSafeSound() {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    osc.type = 'sine'; 
+    osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime); 
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+    osc.connect(gainNode); gainNode.connect(audioCtx.destination);
+    osc.start(audioCtx.currentTime); osc.stop(audioCtx.currentTime + 0.2);
+}
+
+function playErrorSound() {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    osc.type = 'sawtooth'; 
+    osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.3);
+    gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+    osc.connect(gainNode); gainNode.connect(audioCtx.destination);
+    osc.start(audioCtx.currentTime); osc.stop(audioCtx.currentTime + 0.3);
 }

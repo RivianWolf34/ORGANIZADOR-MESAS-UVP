@@ -12,35 +12,43 @@
         .nav-btn { background-color: var(--group-box-bg); color: var(--text-main); border: 1px solid var(--border-color); padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
         .nav-btn:hover { background-color: var(--border-color); }
 
-        .bomb-arena { background: var(--card-bg); padding: 3rem 2rem; border-radius: 24px; border: 3px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.1); position: relative; overflow: hidden; transition: border-color 0.3s; display: flex; flex-direction: column; align-items: center; }
+        .bomb-arena { background: var(--card-bg); padding: 3rem 2rem; border-radius: 24px; border: 3px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.1); position: relative; overflow: hidden; transition: border-color 0.3s, background-color 0.3s; display: flex; flex-direction: column; align-items: center; }
         .arena-danger { border-color: var(--rojo-text); box-shadow: 0 0 40px rgba(211, 47, 47, 0.3); }
 
-        .challenge-text { font-size: 2.2rem; font-weight: 700; color: var(--text-muted); margin-bottom: 1rem; min-height: 50px; }
+        .challenge-text { font-size: 2.2rem; font-weight: 700; color: var(--text-muted); margin-bottom: 1.5rem; min-height: 50px; }
+
+        /* Botones de Opción A y B */
+        .options-container { display: none; gap: 1.5rem; justify-content: center; width: 100%; margin-bottom: 1.5rem; flex-wrap: wrap; }
+        .btn-option { flex: 1; min-width: 250px; max-width: 350px; font-size: 2rem; padding: 1.5rem; font-weight: 800; border-radius: 16px; border: 3px solid var(--border-color); background: var(--input-bg); color: var(--text-main); cursor: pointer; transition: all 0.1s; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .btn-option:hover { transform: translateY(-4px); border-color: var(--primary); box-shadow: 0 8px 15px rgba(0,0,0,0.15); }
+        .btn-option:active { transform: translateY(2px); }
 
         .bomb-icon { font-size: 8rem; line-height: 1; margin-bottom: 1rem; transition: transform 0.1s; display: inline-block; filter: drop-shadow(0 10px 10px rgba(0,0,0,0.2)); }
         
         @keyframes pulse-slow { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
         @keyframes pulse-fast { 0% { transform: scale(1) rotate(-5deg); } 50% { transform: scale(1.2) rotate(5deg); } 100% { transform: scale(1) rotate(-5deg); } }
         @keyframes explode { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(2); opacity: 1; } 100% { transform: scale(3); opacity: 0; } }
+        
+        /* Animaciones de Acierto y Error */
+        @keyframes flashGreen { 0% { background-color: var(--verd-bg); border-color: var(--verd-text); } 100% { background-color: var(--card-bg); border-color: var(--border-color); } }
+        @keyframes flashRed { 0% { background-color: var(--rojo-bg); border-color: var(--rojo-text); } 100% { background-color: var(--card-bg); border-color: var(--border-color); } }
+        .flash-green { animation: flashGreen 0.4s; }
+        .flash-red { animation: flashRed 0.4s; }
 
         .ticking-slow { animation: pulse-slow 1s infinite; }
         .ticking-fast { animation: pulse-fast 0.3s infinite; filter: drop-shadow(0 0 20px red); }
         .exploded { animation: explode 0.5s forwards; }
 
-        .victim-name { font-size: 4rem; font-weight: 900; color: var(--text-main); letter-spacing: -1px; margin: 1rem 0; min-height: 80px; text-transform: uppercase; }
+        .victim-name { font-size: 4.5rem; font-weight: 900; color: var(--text-main); letter-spacing: -1px; margin: 1rem 0; min-height: 80px; text-transform: uppercase; }
         
         .status-badge { display: inline-block; background: var(--info-bg); color: var(--info-text); padding: 0.5rem 1.5rem; border-radius: 999px; font-weight: 800; font-size: 1.2rem; letter-spacing: 2px; text-transform: uppercase; border: 2px solid var(--info-border); }
         .status-boom { background: var(--rojo-bg); color: var(--rojo-text); border-color: var(--rojo-border); }
 
         .teacher-action-bar { display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap; margin-top: 1.5rem; }
-        .btn-pass { font-size: 1.5rem; padding: 1rem 3rem; background-color: var(--verd-text); color: white; border-radius: 999px; box-shadow: 0 6px 0 #1b5e20; transition: all 0.1s; border: none; cursor: pointer; font-weight: bold; }
-        .btn-pass:active { transform: translateY(6px); box-shadow: 0 0 0 #1b5e20; }
-        .btn-pass:disabled { background-color: var(--border-color); box-shadow: 0 6px 0 #999; cursor: not-allowed; }
-        
         .btn-start { font-size: 1.2rem; padding: 0.8rem 2rem; background-color: var(--primary); color: white; border-radius: 12px; border: none; cursor: pointer; font-weight: bold; }
-
-        .textarea-custom { width: 100%; padding: 1rem; border: 2px solid var(--border-color); border-radius: 12px; font-size: 1.1rem; background: var(--input-bg); color: var(--text-main); resize: vertical; min-height: 120px; font-family: inherit; margin-top: 0.5rem; }
-        .textarea-custom:focus { border-color: var(--primary); outline: none; }
+        
+        /* Niveles */
+        .level-badge { background: var(--verd-bg); color: var(--verd-text); padding: 0.5rem 1rem; border-radius: 8px; font-weight: bold; border: 1px solid var(--verd-border); display: inline-block; }
     </style>
 </head>
 <body>
@@ -80,11 +88,23 @@
         <div class="controls-card" id="panelAsistencia" style="display: none;">
             
             <div style="margin-bottom: 2rem; border-bottom: 2px dashed var(--border-color); padding-bottom: 1.5rem;">
-                <h3 style="margin-bottom: 0.5rem;">📝 1. Carga de Preguntas (Opcional)</h3>
-                <div class="info-box" style="border-left: 4px solid var(--amar-text); background: var(--amar-bg); color: var(--text-main);">
-                    Escribe una pregunta por línea. Saldrán al azar y se mezclarán automáticamente si se acaban. Si dejas esto vacío, el juego asume que dictarás de viva voz.
+                <h3 style="margin-bottom: 1rem;">⚙️ 1. Configuración de Nivel de Inglés</h3>
+                
+                <div id="autoLevelDiv" style="display: none;">
+                    <div class="level-badge">✅ Nivel detectado automáticamente: <span id="detectedLevelTxt" style="font-size: 1.2rem;"></span></div>
                 </div>
-                <textarea id="listaRetosRaw" class="textarea-custom" placeholder="Ejemplo:&#10;1. Di un verbo en pasado&#10;2. Traduce: Manzana&#10;3. Nombra 3 colores"></textarea>
+
+                <div id="manualLevelDiv" class="input-group" style="display: none;">
+                    <label style="color: var(--rojo-text);">⚠️ No se detectó el nivel en el nombre del grupo. Selecciónalo manualmente para cargar la Base de Datos:</label>
+                    <select id="manualLevelSelect">
+                        <option value="A1">A1</option>
+                        <option value="A2">A2</option>
+                        <option value="B1">B1</option>
+                        <option value="B2">B2</option>
+                        <option value="C1">C1</option>
+                        <option value="C2">C2</option>
+                    </select>
+                </div>
             </div>
 
             <h3 style="margin-bottom: 0.2rem;">👥 2. Filtro de Asistencia</h3>
@@ -116,9 +136,14 @@
                 
                 <div style="margin-top: 1.5rem; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%;">
                     
-                    <!-- NUEVO: Espacio para la pregunta -->
                     <div id="challengeText" class="challenge-text">¿Pregunta?</div>
                     
+                    <!-- Botones de Opciones -->
+                    <div id="optionsContainer" class="options-container">
+                        <button id="btnOp1" class="btn-option" onclick="evaluar(this)"></button>
+                        <button id="btnOp2" class="btn-option" onclick="evaluar(this)"></button>
+                    </div>
+
                     <div id="bombVisual" class="bomb-icon">💣</div>
                 </div>
 
@@ -126,16 +151,17 @@
 
                 <div class="teacher-action-bar">
                     <button id="btnStartRound" class="btn-start" onclick="iniciarRonda()">🔥 Encender Mecha</button>
-                    <button id="btnPassBomb" class="btn-pass" onclick="pasarBomba()" disabled>Pasar Bomba ⏭️</button>
                 </div>
             </div>
             
             <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 1rem;">
-                <strong>Instrucciones:</strong> Enciende la mecha. Haz una pregunta al alumno en pantalla. Si acierta, oprime "Pasar Bomba" (o la Barra Espaciadora) inmediatamente para lanzársela a alguien más antes de que explote.
+                <strong>Instrucciones:</strong> El alumno responde en voz alta. Haz clic en la opción que el alumno eligió. Si se equivoca, recibirá una penalización (cambio de pregunta inmediata) pero la bomba NO se detiene.
             </p>
         </div>
     </div>
 
+    <!-- AQUÍ SE CARGAN TUS BASES DE DATOS ANTES DE LA LÓGICA -->
+    <script src="db_bomba.js"></script>
     <script src="datos.js"></script>
     <script src="bomb.js"></script>
 </body>

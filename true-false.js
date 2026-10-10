@@ -14,6 +14,7 @@ themeToggle.addEventListener('click', () => {
 // --- SISTEMA DE LOGIN Y SESIÓN ---
 let usuarioActual = null;
 let grupoActual = null;
+let nivelAplicado = null;
 
 async function generarHash(texto) {
     const encoder = new TextEncoder();
@@ -56,7 +57,7 @@ document.getElementById('btnLogout').addEventListener('click', () => {
 document.getElementById('loginPass').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('btnLogin').click(); });
 document.getElementById('loginUser').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('loginPass').focus(); });
 
-// --- LÓGICA DE ASISTENCIA ---
+// --- LÓGICA DE ASISTENCIA Y NIVEL ---
 const selectGrupo = document.getElementById('grupoSelect');
 const panelAsistencia = document.getElementById('panelAsistencia');
 const selectAlumno = document.getElementById('alumnoSelect');
@@ -72,11 +73,27 @@ function cargarGruposProfesor() {
     });
 }
 
+function detectarNivel(nombre) {
+    const match = nombre.match(/(A1|A2|B1|B2|C1|C2)/i);
+    return match ? match[0].toUpperCase() : null;
+}
+
 selectGrupo.addEventListener('change', (e) => {
     grupoActual = e.target.value;
     if (grupoActual) {
         alumnosDelGrupo = [...BASE_DE_DATOS[usuarioActual].grupos[grupoActual]];
         alumnosPresentes = []; 
+        
+        nivelAplicado = detectarNivel(grupoActual);
+        if (nivelAplicado) {
+            document.getElementById('autoLevelDiv').style.display = 'block';
+            document.getElementById('manualLevelDiv').style.display = 'none';
+            document.getElementById('detectedLevelTxt').textContent = nivelAplicado;
+        } else {
+            document.getElementById('autoLevelDiv').style.display = 'none';
+            document.getElementById('manualLevelDiv').style.display = 'flex';
+        }
+
         panelAsistencia.style.display = 'flex';
         tfContainer.style.display = 'none';
         document.getElementById('leaderboardSection').style.display = 'none';
@@ -155,46 +172,37 @@ let indiceReto = 0;
 
 let alumnosActivos = [];
 let alumnosEliminados = [];
-let turnoActual = []; // Urna temporal para que todos pasen 1 vez por ronda
+let turnoActual = []; 
 let alumnoEnPantalla = null;
 
 document.getElementById('btnComenzarJuego').addEventListener('click', () => {
-    // 1. Extracción y Validación de Preguntas y Respuestas
-    const rawPreguntas = document.getElementById('listaRetosRaw').value.split('\n').filter(l => l.trim().length > 0);
-    const rawRespuestas = document.getElementById('listaRespuestasRaw').value.split('\n').filter(l => l.trim().length > 0);
+    
+    if (!nivelAplicado) nivelAplicado = document.getElementById('manualLevelSelect').value;
 
-    if (rawPreguntas.length === 0 || rawRespuestas.length === 0) {
-        alert("⚠️ Por favor, llena ambas cajas de texto (Preguntas y Respuestas) para poder jugar.");
+    const db = DB_TF[nivelAplicado];
+    if(!db || db.preguntas.length === 0) {
+        alert(`⚠️ No hay preguntas cargadas en la Base de Datos para el Nivel ${nivelAplicado}. Por favor, agrégalas en db_tf.js`);
         return;
     }
 
-    if (rawPreguntas.length !== rawRespuestas.length) {
-        alert("⚠️ Cuidado: Tienes " + rawPreguntas.length + " preguntas y " + rawRespuestas.length + " respuestas. Deben coincidir exactamente renglón por renglón.");
-        return;
-    }
-
-    // Unimos la pregunta con la extracción de 'T' o 'F'
     let pares = [];
-    for (let i = 0; i < rawPreguntas.length; i++) {
-        // Busca la primera T o F que encuentre en el string (ej. "1. T" extrae "T")
-        let match = rawRespuestas[i].toUpperCase().match(/[TF]/);
-        let ansClean = match ? match[0] : 'F'; // Si por error no hay, asume F por default
-        
-        pares.push({
-            q: rawPreguntas[i].trim(),
-            a: ansClean
-        });
+    for(let i=0; i < db.preguntas.length; i++) {
+        if(db.preguntas[i]) {
+            // Convierte 'V' a 'T' si llegaras a teclear V por accidente
+            let ans = (db.respuestas[i] || 'F').toUpperCase();
+            if(ans === 'V') ans = 'T';
+            if(ans !== 'T' && ans !== 'F') ans = 'F'; 
+            
+            pares.push({ q: db.preguntas[i], a: ans });
+        }
     }
-
     listaDeRetos = barajarArray(pares);
     indiceReto = 0;
 
-    // 2. Carga de Alumnos
     alumnosActivos = [...alumnosPresentes];
     alumnosEliminados = [];
     turnoActual = barajarArray([...alumnosActivos]);
 
-    // 3. UI
     panelAsistencia.style.display = 'none';
     document.getElementById('controlsCardGrupo').style.display = 'none'; 
     tfContainer.style.display = 'flex';
@@ -244,17 +252,13 @@ window.responder = function(letraElegida) {
     
     if (letraElegida === letraCorrecta) {
         playSafeSound();
-        // Feedback visual Verde
         panel.style.borderColor = '#4CAF50';
         setTimeout(() => { panel.style.borderColor = 'var(--primary)'; }, 500);
-        // Se queda activo
     } else {
         playErrorSound();
-        // Feedback visual Rojo
         panel.style.borderColor = '#F44336';
         setTimeout(() => { panel.style.borderColor = 'var(--primary)'; }, 500);
         
-        // Lo sacamos de activos y lo mandamos a eliminados
         alumnosActivos = alumnosActivos.filter(a => a !== alumnoEnPantalla);
         turnoActual = turnoActual.filter(a => a !== alumnoEnPantalla);
         alumnosEliminados.push(alumnoEnPantalla);

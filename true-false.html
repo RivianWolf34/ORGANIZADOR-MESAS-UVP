@@ -32,9 +32,9 @@
             width: 150px;
         }
         .btn-tf:active { transform: scale(0.95) translateY(4px); box-shadow: 0 2px 5px rgba(0,0,0,0.15); }
-        .btn-true { background-color: #2196F3; color: white; } /* Azul para True */
+        .btn-true { background-color: #2196F3; color: white; }
         .btn-true:hover { background-color: #1E88E5; }
-        .btn-false { background-color: #FF9800; color: white; } /* Naranja para False */
+        .btn-false { background-color: #FF9800; color: white; }
         .btn-false:hover { background-color: #FB8C00; }
 
         /* Columnas de Estado */
@@ -51,13 +51,8 @@
         .btn-danger { background-color: var(--rojo-bg); color: var(--rojo-text); border: 2px solid var(--rojo-border); font-size: 1.1rem; padding: 0.8rem 1.5rem; border-radius: 12px; font-weight: bold; cursor: pointer; }
         .btn-danger:hover { background-color: #ffcccc; }
 
-        /* Cajas de texto y Prompts */
-        .prompt-box { background: var(--info-bg); border: 1px solid var(--info-border); padding: 1.2rem; border-radius: 12px; margin-bottom: 1.5rem; font-size: 0.95rem; color: var(--info-text); }
-        .prompt-code { display: block; background: rgba(0,0,0,0.05); padding: 12px; border-radius: 8px; color: var(--text-main); user-select: all; margin-top: 10px; font-family: monospace; font-size: 1.05rem; }
-        
-        .inputs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
-        .textarea-custom { width: 100%; padding: 1rem; border: 2px solid var(--border-color); border-radius: 12px; font-size: 1.1rem; background: var(--input-bg); color: var(--text-main); resize: vertical; min-height: 120px; font-family: inherit; }
-        .textarea-custom:focus { border-color: var(--primary); outline: none; }
+        /* Niveles */
+        .level-badge { background: var(--verd-bg); color: var(--verd-text); padding: 0.5rem 1rem; border-radius: 8px; font-weight: bold; border: 1px solid var(--verd-border); display: inline-block; }
 
         /* Pantalla Final */
         .leaderboard-section { display: none; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 24px; padding: 3rem 2rem; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
@@ -111,28 +106,22 @@
         <div class="controls-card" id="panelAsistencia" style="display: none;">
             
             <div style="margin-bottom: 2rem; border-bottom: 2px dashed var(--border-color); padding-bottom: 1.5rem;">
-                <h3 style="margin-bottom: 0.5rem;">📝 1. Carga Obligatoria de Preguntas y Respuestas</h3>
+                <h3 style="margin-bottom: 1rem;">⚙️ 1. Configuración de Nivel de Inglés</h3>
                 
-                <div class="prompt-box">
-                    <strong>🤖 Prompt recomendado para IA (Cópialo y pégalo):</strong>
-                    <code class="prompt-code">
-Act as an English teacher. Generate [NUMBER] True or False statements about [TOPIC]. <br><br>
-Provide the output in two separate lists.<br>
-List 1: Only the statements, numbered.<br>
-List 2: Only the answers, numbered, using exclusively 'T' or 'F'.<br><br>
-Optional context/examples to follow: [OPTIONAL EXAMPLES]
-                    </code>
+                <div id="autoLevelDiv" style="display: none;">
+                    <div class="level-badge">✅ Nivel detectado automáticamente: <span id="detectedLevelTxt" style="font-size: 1.2rem;"></span></div>
                 </div>
-                
-                <div class="inputs-grid">
-                    <div>
-                        <label style="font-weight: 800; display: block; margin-bottom: 0.5rem;">❓ PREGUNTAS (Una por línea)</label>
-                        <textarea id="listaRetosRaw" class="textarea-custom" placeholder="Ejemplo:&#10;1. The sky is blue.&#10;2. Dogs can fly.&#10;3. Water boils at 100 degrees."></textarea>
-                    </div>
-                    <div>
-                        <label style="font-weight: 800; display: block; margin-bottom: 0.5rem;">🎯 RESPUESTAS (Una por línea)</label>
-                        <textarea id="listaRespuestasRaw" class="textarea-custom" placeholder="Ejemplo:&#10;1. T&#10;2. F&#10;3. T"></textarea>
-                    </div>
+
+                <div id="manualLevelDiv" class="input-group" style="display: none;">
+                    <label style="color: var(--rojo-text);">⚠️ No se detectó el nivel en el nombre del grupo. Selecciónalo manualmente para cargar la Base de Datos:</label>
+                    <select id="manualLevelSelect">
+                        <option value="A1">A1</option>
+                        <option value="A2">A2</option>
+                        <option value="B1">B1</option>
+                        <option value="B2">B2</option>
+                        <option value="C1">C1</option>
+                        <option value="C2">C2</option>
+                    </select>
                 </div>
             </div>
 
@@ -216,6 +205,7 @@ Optional context/examples to follow: [OPTIONAL EXAMPLES]
         </div>
     </div>
 
+    <script src="db_tf.js"></script>
     <script src="datos.js"></script>
     <script src="true-false.js"></script>
 </body>
