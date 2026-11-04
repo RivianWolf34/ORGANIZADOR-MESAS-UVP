@@ -112,12 +112,14 @@ window.addEventListener('beforeunload', (event) => {
     }
 });
 
-// 2. CARGA DE GRUPOS Y DETECCIÓN DEL MODO ADMIN
+// 2. CARGA DE GRUPOS Y DETECCIÓN DEL MODO ADMIN / ASTRID
 const controlsCardGrupo = document.getElementById('controlsCardGrupo');
 const panelAlumnos = document.getElementById('panelAlumnos');
 const selectGrupo = document.getElementById('grupoSelect');
 const controlesProfesor = document.getElementById('controlesProfesor');
 const controlesAdmin = document.getElementById('controlesAdmin');
+const contenedorModoRapidoAstrid = document.getElementById('contenedorModoRapidoAstrid');
+const btnModoSinLista = document.getElementById('btnModoSinLista');
 
 function cargarConfiguracionUsuario() {
     if (usuarioActual.toLowerCase() === 'admin') {
@@ -147,6 +149,13 @@ function cargarConfiguracionUsuario() {
         controlesProfesor.style.display = 'flex';
         controlesAdmin.style.display = 'none';
         
+        // LIBERAR OPCIÓN SOLO PARA ASTRID
+        if (usuarioActual.toLowerCase() === 'astrid') {
+            contenedorModoRapidoAstrid.style.display = 'block';
+        } else {
+            contenedorModoRapidoAstrid.style.display = 'none';
+        }
+        
         selectGrupo.innerHTML = '<option value="">Elige un grupo...</option>';
         const gruposDelProfe = Object.keys(BASE_DE_DATOS[usuarioActual].grupos);
         
@@ -158,7 +167,9 @@ function cargarConfiguracionUsuario() {
         });
 
         const sesionGrupo = sessionStorage.getItem('grupoActual');
-        if (sesionGrupo && gruposDelProfe.includes(sesionGrupo)) {
+        if (sesionGrupo === '__SIN_LISTA__' && usuarioActual.toLowerCase() === 'astrid') {
+            activarModoSinLista(false);
+        } else if (sesionGrupo && gruposDelProfe.includes(sesionGrupo)) {
             selectGrupo.value = sesionGrupo;
             grupoActual = sesionGrupo;
             alumnosDisponibles = JSON.parse(sessionStorage.getItem('alumnosDisponibles') || JSON.stringify(BASE_DE_DATOS[usuarioActual].grupos[grupoActual]));
@@ -173,11 +184,48 @@ function cargarConfiguracionUsuario() {
     }
 }
 
+// Función que activa el generador por número para Astrid
+function activarModoSinLista(limpiarDatos = true) {
+    selectGrupo.value = ''; // Desmarca cualquier grupo con nombres
+    grupoActual = '__SIN_LISTA__';
+    sessionStorage.setItem('grupoActual', '__SIN_LISTA__');
+    
+    panelAlumnos.style.display = 'flex';
+    controlesProfesor.style.display = 'none'; // Oculta el selector de nombres
+    controlesAdmin.style.display = 'flex';    // Muestra el input de cantidad numérica
+
+    if (limpiarDatos) {
+        alumnosDisponibles = [];
+        alumnosSeleccionados = [];
+        document.getElementById('adminInputNum').value = '';
+        guardarEstadoSesion();
+    } else {
+        alumnosDisponibles = JSON.parse(sessionStorage.getItem('alumnosDisponibles') || '[]');
+        alumnosSeleccionados = JSON.parse(sessionStorage.getItem('alumnosSeleccionados') || '[]');
+    }
+    
+    actualizarSelectorAlumnos();
+    renderizarChips();
+    if (!limpiarDatos && alumnosSeleccionados.length >= 4) {
+        document.getElementById('btnCalcular').click();
+    }
+}
+
+// Evento del nuevo botón exclusivo de Astrid
+btnModoSinLista.addEventListener('click', () => {
+    activarModoSinLista(true);
+});
+
 selectGrupo.addEventListener('change', (e) => {
     const grupoSeleccionado = e.target.value;
     if (grupoSeleccionado) {
         grupoActual = grupoSeleccionado;
         sessionStorage.setItem('grupoActual', grupoSeleccionado);
+        
+        // Nos aseguramos de regresar a los controles normales de nombres
+        controlesProfesor.style.display = 'flex';
+        controlesAdmin.style.display = 'none';
+        
         alumnosDisponibles = [...BASE_DE_DATOS[usuarioActual].grupos[grupoActual]];
         alumnosSeleccionados = [];
         guardarEstadoSesion();
@@ -269,7 +317,7 @@ function agregarAlumno() {
 
 function quitarAlumno(nombre) {
     alumnosSeleccionados = alumnosSeleccionados.filter(n => n !== nombre);
-    if (usuarioActual.toLowerCase() !== 'admin') {
+    if (usuarioActual.toLowerCase() !== 'admin' && grupoActual !== '__SIN_LISTA__') {
         alumnosDisponibles.push(nombre);
     }
     actualizarSelectorAlumnos();
