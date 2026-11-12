@@ -149,9 +149,9 @@ function cargarConfiguracionUsuario() {
         controlesProfesor.style.display = 'flex';
         controlesAdmin.style.display = 'none';
         
-        // LIBERAR OPCIÓN SOLO PARA ASTRID
+        // LIBERAR OPCIÓN SOLO PARA ASTRID (desactivado temporalmente, cambiar el primer none por block)
         if (usuarioActual.toLowerCase() === 'astrid') {
-            contenedorModoRapidoAstrid.style.display = 'block';
+            contenedorModoRapidoAstrid.style.display = 'none';
         } else {
             contenedorModoRapidoAstrid.style.display = 'none';
         }
